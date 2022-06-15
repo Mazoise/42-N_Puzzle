@@ -1,6 +1,9 @@
 #pragma once
 #include "GameState.hpp"
 #include <algorithm>
+#include <fstream>
+#include <cstring>
+
 
 class GameStateBuilder {
   public:
@@ -64,7 +67,7 @@ class GameStateBuilder {
                 }
                 else
                 {
-                    if (nb > size * size)
+                    if (nb > (int)(size * size))
                         throw ParsingException("Number too large in table");
                     if (column_count >= size)
                         throw ParsingException("Too many numbers on line " + std::to_string(line_count - 1) + " of table");
@@ -95,35 +98,28 @@ class GameStateBuilder {
         }
     }
 
-    static bool isEmptyBox(std::vector<int> table, size_t size, size_t j, size_t i) {
-        if (i >= size || j >= size || i < 0 || j < 0)
+    static bool isEmptyBox(std::vector<int> table, size_t size, const GameState::Point& p) {
+        if (p.x >= (int)size || p.y >= (int)size || p.x < 0 || p.y < 0)
             return false;
-        return table[j * size + i] == 0;
+        return table[p.y * size + p.x] == 0;
     }
 
     static GameState generateSolution(size_t size)
     {
         std::vector<int> data(size * size);
-        size_t value = 1;
-        size_t i = 0;
-        size_t j = 0;
-        size_t dir_idx = 0;
-        std::pair<int, int > dir[] = {
-            {0, 1},
-            {1, 0},
-            {0, -1},
-            {-1, 0}
-        };
-        while (value < size * size)
+        size_t value = 0;
+        GameState::Point pos;
+
+        auto dir = GameState::directions.begin();
+        while (value < size * size - 1)
         {
-            data[j * size + i] = value;
-            value++;
-            if (!isEmptyBox(data, size, j + dir[dir_idx].first, i + dir[dir_idx].second))
-            {
-                dir_idx = (dir_idx + 1) % 4;
+            data[pos.y * size + pos.x] = ++value;
+            if (!isEmptyBox(data, size, pos + dir->second)) {
+                ++dir;
+                if (dir == GameState::directions.end())
+                    dir = GameState::directions.begin();
             }
-            j += dir[dir_idx].first;
-            i += dir[dir_idx].second;
+            pos += dir->second;
         }
         return GameState(data, size);
     }

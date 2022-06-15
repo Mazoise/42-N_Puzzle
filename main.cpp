@@ -13,10 +13,8 @@ int main(int argc, char *argv[])
     }
     std::srand(time(NULL));
     try {
-        GameState table = GameStateBuilder::fromFile(argv[1]);
-        GameState final_state = GameStateBuilder::generateRandom(8);
-        std::cout << table << std::endl;
-        std::cout << final_state;
+        GameState random = GameStateBuilder::generateSolution(8);
+        std::cout << random;
     } catch (GameStateBuilder::ParsingException e) {
         std::cout << "Parsing error : " << e.what() << std::endl;
         return 1;
