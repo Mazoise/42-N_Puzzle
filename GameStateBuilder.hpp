@@ -1,5 +1,6 @@
 #pragma once
 #include "GameState.hpp"
+#include <algorithm>
 
 class GameStateBuilder {
   public:
@@ -94,8 +95,45 @@ class GameStateBuilder {
         }
     }
 
-    static GameState generateSolution(size_t size);
+    static bool isEmptyBox(std::vector<int> table, size_t size, size_t j, size_t i) {
+        if (i >= size || j >= size || i < 0 || j < 0)
+            return false;
+        return table[j * size + i] == 0;
+    }
 
-    static GameState generateRandom(size_t size);
+    static GameState generateSolution(size_t size)
+    {
+        std::vector<int> data(size * size);
+        size_t value = 1;
+        size_t i = 0;
+        size_t j = 0;
+        size_t dir_idx = 0;
+        std::pair<int, int > dir[] = {
+            {0, 1},
+            {1, 0},
+            {0, -1},
+            {-1, 0}
+        };
+        while (value < size * size)
+        {
+            data[j * size + i] = value;
+            value++;
+            if (!isEmptyBox(data, size, j + dir[dir_idx].first, i + dir[dir_idx].second))
+            {
+                dir_idx = (dir_idx + 1) % 4;
+            }
+            j += dir[dir_idx].first;
+            i += dir[dir_idx].second;
+        }
+        return GameState(data, size);
+    }
+
+    static GameState generateRandom(size_t size){
+        std::vector<int> data(size * size);
+        for (size_t i = 0; i < size * size; i++)
+            data[i] = i;
+        std::random_shuffle(data.begin(), data.end());
+        return GameState(data, size);
+    }
 
 };
