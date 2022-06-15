@@ -93,4 +93,9 @@ class GameStateBuilder {
             throw ParsingException("Number too large in table");
         }
     }
+
+    static GameState generateSolution(size_t size);
+
+    static GameState generateRandom(size_t size);
+
 };

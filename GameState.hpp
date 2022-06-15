@@ -10,8 +10,17 @@
 
 class GameState {
   public:
+    enum Direction {
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT
+    };
+
     GameState(const std::vector<int>& data, size_t size) : _data(data), _size(size) {}
     virtual ~GameState() {}
+
+    void swap(Direction d);
 
     friend std::ostream& operator<<(std::ostream& os, const GameState& table) {
         for (size_t i = 0; i < table._size; i++) {
