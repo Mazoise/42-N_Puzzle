@@ -1,0 +1,6 @@
+# This puzzle is solvable
+4
+15  0  1  8
+10  5 13 12  # triple linear conflict
+ 6  2  7  9
+ 4 11 14  3
