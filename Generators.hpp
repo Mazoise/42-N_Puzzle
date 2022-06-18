@@ -3,9 +3,13 @@
 #include <algorithm>
 #include <fstream>
 #include <cstring>
+#include <memory>
+#include <utility>
+#include "RandomTable.hpp"
 
+typedef std::vector<int> Data;
 
-class GameStateBuilder {
+class Generators {
   public:
     class ParsingException : public std::exception {
         public:
@@ -28,7 +32,7 @@ class GameStateBuilder {
             pos++;
     }
 
-    static GameState parse_file(std::ifstream &fs)
+    static Data parse_file(std::ifstream &fs)
     {
         std::string line;
         size_t      line_count = 0;
@@ -38,7 +42,7 @@ class GameStateBuilder {
         size_t      tmp_count;
         std::vector<bool> filled;
         size_t size;
-        std::vector<int> data;
+        Data data;
 
         while (getline(fs, line))
         {
@@ -81,10 +85,10 @@ class GameStateBuilder {
             }
             line_count++;
         }
-        return GameState(data, size);
+        return data;
     }
 
-    static GameState fromFile(std::string filename) {
+    static Data fromFile(std::string filename) {
         FileReader fs(filename);
         if (!fs.is_open()) {
             throw ParsingException("Error opening " + filename + " : " + std::strerror(errno));
@@ -99,14 +103,14 @@ class GameStateBuilder {
     }
 
     static bool isEmptyBox(std::vector<int> table, size_t size, const GameState::Point& p) {
-        if (p.x >= (int)size || p.y >= (int)size || p.x < 0 || p.y < 0)
+        if (!p.in_bounds(size))
             return false;
         return table[p.y * size + p.x] == 0;
     }
 
-    static GameState generateSolution(size_t size)
+    static Data generateSolution(size_t size)
     {
-        std::vector<int> data(size * size);
+        Data data(size * size);
         size_t value = 0;
         GameState::Point pos;
 
@@ -121,15 +125,15 @@ class GameStateBuilder {
             }
             pos += dir->second;
         }
-        return GameState(data, size);
+        return data;
     }
 
-    static GameState generateRandom(size_t size){
-        std::vector<int> data(size * size);
+    static Data generateRandom(size_t size){
+        Data data(size * size);
         for (size_t i = 0; i < size * size; i++)
             data[i] = i;
         std::random_shuffle(data.begin(), data.end());
-        return GameState(data, size);
+        return data;
     }
 
 };

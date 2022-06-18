@@ -6,6 +6,8 @@
 #include <iomanip>
 #include <algorithm>
 #include <map>
+#include <memory>
+#include "RandomTable.hpp"
 
 class GameState {
   public:
@@ -41,6 +43,10 @@ class GameState {
             return Point(x / other, y / other);
         }
 
+        bool in_bounds(int size) const {
+            return x >= 0 && x < size && y >= 0 && y < size;
+        }
+
         int x;
         int y;
     };
@@ -54,22 +60,35 @@ class GameState {
 
     static std::map<Direction, Point> directions;
 
-    GameState(const std::vector<int>& data, size_t size) : _data(data), _size(size) {
+    GameState(const std::vector<int>& data, size_t size, const RandomTable &table) : _data(data), _size(size), _table(table) {
         auto i = std::find(_data.begin(), _data.end(), 0);
         size_t index = std::distance(_data.begin(), i);
         _zero = Point(index % _size, (int)(index / _size));
+        _hash = 0;
+        for (size_t i = 0; i < _data.size(); ++i)
+            if (_data[i] != 0)
+                _hash ^= _table(_data[i], i % _size, (size_t)(i / _size));
     }
 
     virtual ~GameState() {}
 
-    void swap(Direction d) { // no bound checks
-        auto tmp = (*this)[_zero];
-        (*this)[_zero] = (*this)[_zero + directions[d]];
-        (*this)[_zero + directions[d]] = tmp;
+    void swap(Direction d) {
+        Point new_pos = _zero + directions[d];
+        if (!new_pos.in_bounds(_size)) 
+            return ;
+        int nb = (*this)[new_pos];
+        _hash ^= _table(nb, new_pos.x, new_pos.y);
+        _hash ^= _table(nb, _zero.x, _zero.y);
+        std::swap((*this)[_zero], (*this)[new_pos]);
+        _zero = new_pos;
     }
 
     size_t size() const {
         return _size;
+    }
+
+    uint64_t hash() const {
+        return _hash;
     }
 
     int operator[](Point p) const {
@@ -93,6 +112,10 @@ class GameState {
     std::vector<int> _data;
     size_t _size;
     Point _zero;
+    uint64_t _hash;
+    const RandomTable& _table;
+
+    GameState& operator=(const GameState&) = delete;
 };
 
 std::map<GameState::Direction, GameState::Point> GameState::directions = {
