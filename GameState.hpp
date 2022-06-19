@@ -79,17 +79,22 @@ class GameState {
 
     virtual ~GameState() {}
 
-    void swap(Direction d) {
-        Point zero = getPoint(find(0));
-        Point p = zero + directions[d];
-        if (!p.in_bounds(_size))
-            throw std::out_of_range("Point is out of bounds, swap failed");
-        int nb = (*this)[p];
-        _hash ^= _table(nb, p.x, p.y);
-        _hash ^= _table(nb, zero.x, zero.y);
-        std::swap((*this)[zero], (*this)[p]);
-        _reverseData[0] = getIndex(p); 
-        _reverseData[(*this)[zero]] = getIndex(zero);
+    GameState clone() const {
+        return GameState(_data, _size, _table);
+    }
+
+    Point neighbor(Direction d) {
+        return _zero + directions[d];
+    }
+
+    void swap(Point &neighbor) {
+        int nb = (*this)[neighbor];
+        _hash ^= _table(nb, neighbor.x, neighbor.y);
+        _hash ^= _table(nb, _zero.x, _zero.y);
+        std::swap((*this)[_zero], (*this)[neighbor]);
+        _reverseData[0] = getIndex(neighbor); 
+        _reverseData[(*this)[_zero]] = getIndex(_zero);
+        _zero = neighbor;
     }
 
     size_t find(size_t value) const {
@@ -215,6 +220,7 @@ class GameState {
     std::vector<int> _reverseData; // gives the index of the value in the _data vector, will speed up the heuristic calculations
     size_t _size;
     uint64_t _hash;
+    Point _zero;
     const RandomTable& _table;
 
     GameState& operator=(const GameState&) = delete;
