@@ -15,6 +15,14 @@ class GameState {
     struct Point {
         Point(int x = 0, int y = 0) : x(x), y(y) {}
 
+        bool operator==(const Point& other) const {
+            return x == other.x && y == other.y;
+        }
+
+        bool operator!=(const Point& other) const {
+            return !(*this == other);
+        }
+
         size_t distance(const Point &other) const {
             return std::abs(x - other.x) + std::abs(y - other.y);
         }
@@ -39,11 +47,11 @@ class GameState {
             return *this;
         }
 
-        Point operator*(const int& other) const {
+        Point operator*(int other) const {
             return Point(x * other, y * other);
         }
 
-        Point operator/(const int& other) const {
+        Point operator/(int other) const {
             return Point(x / other, y / other);
         }
 
@@ -65,8 +73,6 @@ class GameState {
     static std::map<Direction, Point> directions;
 
     GameState(const std::vector<int>& data, size_t size, const RandomTable &table) : _data(data), _size(size), _table(table) {
-        auto i = std::find(_data.begin(), _data.end(), 0);
-        size_t index = std::distance(_data.begin(), i);
         _hash = 0;
         for (size_t i = 0; i < _data.size(); ++i)
             if (_data[i] != 0)
@@ -75,6 +81,7 @@ class GameState {
         for (size_t i = 0; i < _data.size(); i++) {
             _reverseData[_data[i]] = i;
         }
+        _zero = getPoint(find(0));
     }
 
     virtual ~GameState() {}
@@ -131,13 +138,13 @@ class GameState {
         }
         Point p = getPoint(0);
         Point tmp;
-        for (p.y = 0; p.y < _size; p.y++) {
-            for (p.x = 0; p.x < _size; p.x++) { // for each box except 0
+        for (p.y = 0; (size_t)p.y < _size; p.y++) {
+            for (p.x = 0; (size_t)p.x < _size; p.x++) { // for each box except 0
                 if ((*this)[p] == 0)
                     continue;
                 if (right_line[getIndex(p)]) {
                     tmp = p;
-                    while(tmp.y < _size - 1) {
+                    while((size_t)tmp.y < _size - 1) {
                         tmp += directions[DOWN];
                         if ((*this)[tmp] != 0 && right_line[getIndex(tmp)]) // find a box that is in it's right line too
                         {
@@ -149,7 +156,7 @@ class GameState {
                 }
                 if (right_column[getIndex(p)]) {
                     tmp = p;
-                    while(tmp.x < _size - 1) {
+                    while((size_t)tmp.x < _size - 1) {
                         tmp += directions[RIGHT];
                         if ((*this)[tmp] != 0 && right_column[getIndex(tmp)])
                         {
