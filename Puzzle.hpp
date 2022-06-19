@@ -8,30 +8,29 @@
 #include <iostream>
 #include <vector>
 
+typedef std::vector<GameState::Direction> Solution;
+
 class Puzzle {
   public:
     Puzzle(const std::vector<int>& data):
         _size(std::sqrt(data.size())),
         _table(RandomTable(_size)),
-        _state(GameState(data, _size, _table)),
+        _initial(data, _size, _table),
         _solution(GameState(Generators::generateSolution(_size), _size, _table))
     {}
 
     //A* search, return right sequence of moves for n-puzzle
-    void solve() {
+    Solution solve() {
         std::queue<GameState> queue;
         std::set<uint64_t> visited;
         GameState::Point last_move;
-        size_t i = 0;
 
-        queue.push(_state);
+        queue.push(_initial.clone());
         while (!queue.empty()) {
-            ++i;
             GameState current = queue.front();
             queue.pop();
-            if (current.hash() == _solution.hash()) {;
-                std::cout << "nb iterations : " << i << std::endl;
-                return;
+            if (current.hash() == _solution.hash()) {
+                return current.get_moves();
             }
             visited.insert(current.hash());
             for (auto& move : current.directions) {
@@ -45,16 +44,28 @@ class Puzzle {
                 GameState next = current.clone();
                 next.swap(neighbor);
                 if (visited.find(next.hash()) == visited.end()) {
+                    next.push_move(move.first);
                     queue.push(next);
                 }
             }
         }
         std::cout << "No solution" << std::endl;
+        return Solution();
+    }
+
+    void play(const Solution& sol) {
+        GameState current = _initial.clone();
+        for (auto& move : sol) {
+            auto neighbor = current.neighbor(move);
+            current.swap(neighbor);
+            std::cout << current << std::endl;
+            getchar();
+        }
     }
 
   private:
     size_t _size;
     RandomTable _table;
-    GameState _state;
+    GameState _initial;
     GameState _solution;
 };

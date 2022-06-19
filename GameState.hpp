@@ -87,7 +87,9 @@ class GameState {
     virtual ~GameState() {}
 
     GameState clone() const {
-        return GameState(_data, _size, _table);
+        auto g = GameState(_data, _size, _table);
+        g._moves = _moves;
+        return g;
     }
 
     Point neighbor(Direction d) {
@@ -183,6 +185,14 @@ class GameState {
         return out;
     }
 
+    void push_move(Direction d) {
+        _moves.push_back(d);
+    }
+
+    std::vector<Direction> get_moves() const {
+        return _moves;
+    }
+
     size_t size() const {
         return _size;
     }
@@ -228,6 +238,7 @@ class GameState {
     size_t _size;
     uint64_t _hash;
     Point _zero;
+    std::vector<Direction> _moves;
     const RandomTable& _table;
 
     GameState& operator=(const GameState&) = delete;

@@ -14,7 +14,9 @@ int main(int argc, char *argv[])
     std::srand(time(NULL));
     try {
         Puzzle puzzle(Generators::fromFile(argv[1]));
-        puzzle.solve();
+        auto solution = puzzle.solve();
+        std::cout << solution.size() << std::endl;
+        puzzle.play(solution);
     } catch (Generators::ParsingException e) {
         std::cout << "Parsing error : " << e.what() << std::endl;
         return 1;
