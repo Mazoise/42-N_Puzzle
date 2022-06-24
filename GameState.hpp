@@ -110,12 +110,16 @@ class GameState {
         return _reverseData[value];
     }
 
-    int manhattanDistance(const GameState &rhs) const { // heuristic nb 1
-        int distance = 0;
-        if (rhs._size != _size)
+    // static size_t find(const GameState &rhs, size_t value) {
+    //     return rhs._reverseData[value];
+    // }
+
+    static double manhattanDistance(const GameState &lhs, const GameState &rhs) { // heuristic nb 1
+        double distance = 0;
+        if (rhs._size != lhs._size)
             throw std::invalid_argument("GameStates have different size");
-        for (size_t i = 1; i < _reverseData.size(); i++) { // skip 0 (empty box)
-            Point p = getPoint(find(i));
+        for (size_t i = 1; i < lhs._reverseData.size(); i++) { // skip 0 (empty box)
+            Point p = lhs.getPoint(lhs.find(i));
             // std::cout << p.distance(rhs.getPoint(rhs.find(i))) << " ";
             distance += p.distance(rhs.getPoint(rhs.find(i)));
         }
@@ -123,62 +127,62 @@ class GameState {
         return distance;
     }
 
-    int linearConflict(const GameState &rhs) const {  // heuristic nb 2
-        int conflict = 0;
-        std::vector<bool> right_column(_size * _size, false); // should we store this in the class? would be faster
-        std::vector<bool> right_line(_size * _size, false);
-        if (rhs._size != _size)
+    static double linearConflict(const GameState &lhs, const GameState &rhs) {  // heuristic nb 2
+        double conflict = manhattanDistance(lhs, rhs);
+        std::vector<bool> right_column(lhs._size * lhs._size, false); // should we store this in the class? would be faster
+        std::vector<bool> right_line(lhs._size * lhs._size, false);
+        if (rhs._size != lhs._size)
             throw std::invalid_argument("GameStates have different size");
-        for (size_t i = 1; i < _reverseData.size(); i++) { // skip 0 (empty box)
-            Point p = getPoint(find(i));
+        for (size_t i = 1; i < lhs._reverseData.size(); i++) { // skip 0 (empty box)
+            Point p = lhs.getPoint(lhs.find(i));
             if (p.x == rhs.getPoint(rhs.find(i)).x && p.y != rhs.getPoint(rhs.find(i)).y) {
-                right_line[find(i)] = true;
+                right_line[lhs.find(i)] = true;
             }
             if (p.y == rhs.getPoint(rhs.find(i)).y && p.x != rhs.getPoint(rhs.find(i)).x) { // true if right column AND wrong line
-                right_column[find(i)] = true; // index is the index, we don't care about the value in this function
+                right_column[lhs.find(i)] = true; // index is the index, we don't care about the value in this function
             }
         }
-        Point p = getPoint(0);
+        Point p = lhs.getPoint(0);
         Point tmp;
-        for (p.y = 0; (size_t)p.y < _size; p.y++) {
-            for (p.x = 0; (size_t)p.x < _size; p.x++) { // for each box except 0
-                if ((*this)[p] == 0)
+        for (p.y = 0; (size_t)p.y < lhs._size; p.y++) {
+            for (p.x = 0; (size_t)p.x < lhs._size; p.x++) { // for each box except 0
+                if (lhs[p] == 0)
                     continue;
-                if (right_line[getIndex(p)]) {
+                if (right_line[lhs.getIndex(p)]) {
                     tmp = p;
-                    while((size_t)tmp.y < _size - 1) {
+                    while((size_t)tmp.y < lhs._size - 1) {
                         tmp += directions[DOWN];
-                        if ((*this)[tmp] != 0 && right_line[getIndex(tmp)]) // find a box that is in it's right line too
+                        if (lhs[tmp] != 0 && right_line[lhs.getIndex(tmp)]) // find a box that is in it's right line too
                         {
-                            // std::cerr << "Vertical linear conflict  between " << (*this)[p] << " and " << (*this)[tmp] << std::endl;
-                            if (rhs.getPoint(rhs.find((*this)[p])).y > rhs.getPoint(rhs.find((*this)[tmp])).y) // check if boxes are switched (here we always have p.y > tmp.y so if final_p.y < final_tmp.y then we have a conflict)
-                                conflict++;
+                            // std::cerr << "Vertical linear conflict  between " << lhs[p] << " and " << lhs[tmp] << std::endl;
+                            if (rhs.getPoint(rhs.find(lhs[p])).y > rhs.getPoint(rhs.find(lhs[tmp])).y) // check if boxes are switched (here we always have p.y > tmp.y so if final_p.y < final_tmp.y then we have a conflict)
+                                conflict += 2;
                         }
                     }
                 }
-                if (right_column[getIndex(p)]) {
+                if (right_column[lhs.getIndex(p)]) {
                     tmp = p;
-                    while((size_t)tmp.x < _size - 1) {
+                    while((size_t)tmp.x < lhs._size - 1) {
                         tmp += directions[RIGHT];
-                        if ((*this)[tmp] != 0 && right_column[getIndex(tmp)])
+                        if (lhs[tmp] != 0 && right_column[lhs.getIndex(tmp)])
                         {
-                            // std::cerr << "Horizontal linear conflict between " << (*this)[p] << " and " << (*this)[tmp] << std::endl;
-                            if (rhs.getPoint(rhs.find((*this)[p])).x > rhs.getPoint(rhs.find((*this)[tmp])).x)
-                                conflict++;
+                            // std::cerr << "Horizontal linear conflict between " << lhs[p] << " and " << lhs[tmp] << std::endl;
+                            if (rhs.getPoint(rhs.find(lhs[p])).x > rhs.getPoint(rhs.find(lhs[tmp])).x)
+                                conflict += 2;
                         }
                     }
                 }
             }
         }
-        return conflict * 2; // each conflict adds at least 2 more steps to solve
+        return conflict; // each conflict adds at least 2 more steps to solve
     }
 
-    int outOfRowNColumn(const GameState &rhs) const { // heuristic nb 3
-        int out = 0;
-        if (rhs._size != _size)
+    static double outOfRowNColumn(const GameState &lhs, const GameState &rhs) { // heuristic nb 3
+        double out = 0;
+        if (rhs._size != lhs._size)
             throw std::invalid_argument("GameStates have different size");
-        for (size_t i = 1; i < _reverseData.size(); i++) { // skip 0 (empty box)
-            Point p = getPoint(find(i));
+        for (size_t i = 1; i < lhs._reverseData.size(); i++) { // skip 0 (empty box)
+            Point p = lhs.getPoint(lhs.find(i));
             if (p.x != rhs.getPoint(rhs.find(i)).x && p.y != rhs.getPoint(rhs.find(i)).y)
                 out++;
         }
@@ -205,9 +209,17 @@ class GameState {
         return Point(index % _size, (int)(index / _size));
     }
 
+    // static Point getPoint(size_t index, size_t size) {
+    //     return Point(index % size, (int)(index / size));
+    // }
+
     int getIndex(const Point& p) const {
         return p.y * _size + p.x;
     }
+
+    // static int getIndex(const Point& p, size_t size) {
+    //     return p.y * size + p.x;
+    // }
 
     int operator[](Point p) const {
         return _data[p.x + p.y * _size];
