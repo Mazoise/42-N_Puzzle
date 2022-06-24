@@ -15,6 +15,8 @@ class GameState {
     struct Point {
         Point(int x = 0, int y = 0) : x(x), y(y) {}
 
+        Point(Point const& other) : x(other.x), y(other.y) {}
+
         Point & operator=(Point const &rhs) {
             x = rhs.x;
             y = rhs.y;
@@ -133,20 +135,20 @@ class GameState {
     //     return rhs._reverseData[value];
     // }
 
-    void setHeuristicScore(double score) {
+    void setHeuristicScore(size_t score) {
         _heuristicScore = score;
     }
 
-    double getHeuristicScore() const {
+    size_t getHeuristicScore() const {
         return _heuristicScore;
     }
 
-    static double noHeuristic(const GameState &lhs, const GameState &rhs) {
+    static size_t noHeuristic(const GameState &, const GameState &) {
         return 0;
     }
 
-    static double manhattanDistance(const GameState &lhs, const GameState &rhs) { // heuristic nb 1
-        double distance = 0;
+    static size_t manhattan(const GameState &lhs, const GameState &rhs) { // heuristic nb 1
+        size_t distance = 0;
         // std::cout << "Heuristic is Manhattan" << std::endl;
         if (rhs._size != lhs._size)
             throw std::invalid_argument("GameStates have different size");
@@ -159,17 +161,17 @@ class GameState {
         return distance;
     }
 
-    static double linearConflict(const GameState &lhs, const GameState &rhs) {  // heuristic nb 2
-        double conflict = manhattanDistance(lhs, rhs);
-        // std::cout << "Heuristic is Linear conflict" << std::endl;
+    static size_t countInversions(const GameState &lhs, const GameState &rhs) {
+        size_t conflict = 0;
         std::vector<bool> right_column(lhs._size * lhs._size, false); // should we store this in the class? would be faster
-        std::vector<bool> right_line(lhs._size * lhs._size, false);
+        std::vector<bool> right_row(lhs._size * lhs._size, false);
+
         if (rhs._size != lhs._size)
             throw std::invalid_argument("GameStates have different size");
         for (size_t i = 1; i < lhs._reverseData.size(); i++) { // skip 0 (empty box)
             Point p = lhs.getPoint(lhs.find(i));
             if (p.x == rhs.getPoint(rhs.find(i)).x && p.y != rhs.getPoint(rhs.find(i)).y) {
-                right_line[lhs.find(i)] = true;
+                right_row[lhs.find(i)] = true;
             }
             if (p.y == rhs.getPoint(rhs.find(i)).y && p.x != rhs.getPoint(rhs.find(i)).x) { // true if right column AND wrong line
                 right_column[lhs.find(i)] = true; // index is the index, we don't care about the value in this function
@@ -181,16 +183,13 @@ class GameState {
             for (p.x = 0; (size_t)p.x < lhs._size; p.x++) { // for each box except 0
                 if (lhs[p] == 0)
                     continue;
-                if (right_line[lhs.getIndex(p)]) {
+                if (right_row[lhs.getIndex(p)]) {
                     tmp = p;
                     while((size_t)tmp.y < lhs._size - 1) {
                         tmp += directions[DOWN];
-                        if (lhs[tmp] != 0 && right_line[lhs.getIndex(tmp)]) // find a box that is in it's right line too
-                        {
+                        if (lhs[tmp] != 0 && right_row[lhs.getIndex(tmp)]) // find a box that is in it's right line too
+                            conflict += rhs.getPoint(rhs.find(lhs[p])).y > rhs.getPoint(rhs.find(lhs[tmp])).y; // check if boxes are switched (here we always have p.y > tmp.y so if final_p.y < final_tmp.y then we have a conflict)
                             // std::cerr << "Vertical linear conflict  between " << lhs[p] << " and " << lhs[tmp] << std::endl;
-                            if (rhs.getPoint(rhs.find(lhs[p])).y > rhs.getPoint(rhs.find(lhs[tmp])).y) // check if boxes are switched (here we always have p.y > tmp.y so if final_p.y < final_tmp.y then we have a conflict)
-                                conflict += 2;
-                        }
                     }
                 }
                 if (right_column[lhs.getIndex(p)]) {
@@ -198,11 +197,8 @@ class GameState {
                     while((size_t)tmp.x < lhs._size - 1) {
                         tmp += directions[RIGHT];
                         if (lhs[tmp] != 0 && right_column[lhs.getIndex(tmp)])
-                        {
+                            conflict += rhs.getPoint(rhs.find(lhs[p])).x > rhs.getPoint(rhs.find(lhs[tmp])).x;
                             // std::cerr << "Horizontal linear conflict between " << lhs[p] << " and " << lhs[tmp] << std::endl;
-                            if (rhs.getPoint(rhs.find(lhs[p])).x > rhs.getPoint(rhs.find(lhs[tmp])).x)
-                                conflict += 2;
-                        }
                     }
                 }
             }
@@ -210,8 +206,18 @@ class GameState {
         return conflict; // each conflict adds at least 2 more steps to solve
     }
 
-    static double outOfRowNColumn(const GameState &lhs, const GameState &rhs) { // heuristic nb 3
-        double out = 0;
+    bool isSolvable(const GameState &rhs) {
+        bool result = countInversions(*this, rhs) % 2 == 0;
+        std::cout << (result? "Solvable" : "Unsolvable") << std::endl;
+        return result;//countInversions(lhs, rhs) % 2 == 0;
+    }
+
+    static size_t linearConflict(const GameState &lhs, const GameState &rhs) {  // heuristic nb 2
+        return  manhattan(lhs, rhs) + countInversions(lhs, rhs) * 2;
+    }
+
+    static size_t hamming(const GameState &lhs, const GameState &rhs) { // heuristic nb 3
+        size_t out = 0;
         // std::cout << "Heuristic is Out of Row/Column" << std::endl;
         if (rhs._size != lhs._size)
             throw std::invalid_argument("GameStates have different size");
@@ -290,7 +296,8 @@ class GameState {
     Point _zero;
     std::vector<Direction> _moves;
     const RandomTable& _table;
-    double          _heuristicScore;
+    size_t          _heuristicScore;
+
 
     // GameState& operator=(const GameState&) = delete;
 };

@@ -15,7 +15,7 @@ typedef std::vector<GameState::Direction> Solution;
 
 class Puzzle {
   public:
-    Puzzle(double (*heuristic)(const GameState &lhs, const GameState &rhs), const std::vector<int>& data):
+    Puzzle(heuristic_t heuristic, const std::vector<int>& data):
         _size(std::sqrt(data.size())),
         _table(RandomTable(_size)),
         _initial(data, _size, _table),
@@ -27,9 +27,13 @@ class Puzzle {
     Solution solve() {
         std::priority_queue<GameState, std::vector<GameState>, std::greater<GameState> > queue;
         GameState::Point last_move;
-        std::unordered_map<uint64_t, uint64_t> came_from;
-        std::unordered_map<uint64_t, double> visited;
+        // std::unordered_map<uint64_t, uint64_t> came_from;
+        std::unordered_map<uint64_t, size_t> visited;
 
+        if(!_initial.isSolvable(_solution)) {
+            std::cout << "Puzzle is not solvable" << std::endl;
+            return Solution();
+        }
         _initial.setHeuristicScore(_heuristic(_initial, _solution)); //should add level as well
         queue.push(_initial); //calls copy constructor
         while (!queue.empty()) {
@@ -49,10 +53,14 @@ class Puzzle {
                     continue;
                 GameState next = current.clone();
                 next.swap(neighbor);
-                if (visited.find(next.hash()) == visited.end()) {
-                    next.setHeuristicScore(_heuristic(next, _solution)); //should add level as well
+                next.setHeuristicScore(_heuristic(next, _solution)); //should add level as well
+                auto already_visited = visited.find(next.hash());
+                if (already_visited == visited.end() || already_visited->second > next.getHeuristicScore() + next.get_moves().size()) { // we can add p later if we want to implement tie-breaking
+                    if (already_visited != visited.end())
+                        already_visited->second = next.getHeuristicScore() + next.get_moves().size(); 
                     next.push_move(move.first);
                     queue.push(next);
+                    // came_from.insert(std::make_pair(next.hash(), current.hash()));
                 }
             }
         }
@@ -75,5 +83,5 @@ class Puzzle {
     RandomTable _table;
     GameState _initial;
     GameState _solution;
-    double (*_heuristic)(const GameState &lhs, const GameState &rhs);
+    heuristic_t _heuristic;
 };

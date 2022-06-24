@@ -8,6 +8,7 @@
 #include "RandomTable.hpp"
 
 typedef std::vector<int> Data;
+typedef size_t (*heuristic_t)(const GameState &lhs, const GameState &rhs);
 
 class Generators {
   public:
@@ -32,14 +33,14 @@ class Generators {
             pos++;
     }
 
-    static double (*(setHeuristic(std::string option)))(const GameState &lhs, const GameState &rhs)
+    static heuristic_t setHeuristic(std::string option)
     {
         if (option == "-mh")
-            return &GameState::manhattanDistance;
+            return &GameState::manhattan;
         else if (option == "-lc")
             return &GameState::linearConflict;
-        else if (option == "-rc")
-            return &GameState::outOfRowNColumn;
+        else if (option == "-hg")
+            return &GameState::hamming;
         else if (option == "-nh")
             return &GameState::noHeuristic;
         else
