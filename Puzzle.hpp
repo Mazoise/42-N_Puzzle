@@ -7,6 +7,9 @@
 #include <set>
 #include <iostream>
 #include <vector>
+#include <unordered_map>
+#include <utility>
+#include <queue>
 
 typedef std::vector<GameState::Direction> Solution;
 
@@ -22,18 +25,20 @@ class Puzzle {
 
     //A* search, return right sequence of moves for n-puzzle
     Solution solve() {
-        std::queue<GameState> queue;
-        std::set<uint64_t> visited;
+        std::priority_queue<GameState, std::vector<GameState>, std::greater<GameState> > queue;
         GameState::Point last_move;
+        std::unordered_map<uint64_t, uint64_t> came_from;
+        std::unordered_map<uint64_t, double> visited;
 
-        queue.push(_initial.clone());
+        _initial.setHeuristicScore(_heuristic(_initial, _solution)); //should add level as well
+        queue.push(_initial); //calls copy constructor
         while (!queue.empty()) {
-            GameState current = queue.front();
+            GameState current = queue.top();
             queue.pop();
             if (current.hash() == _solution.hash()) {
                 return current.get_moves();
             }
-            visited.insert(current.hash());
+            visited.insert(std::make_pair(current.hash(), current.getHeuristicScore()));
             for (auto& move : current.directions) {
                 if (move.second == last_move * -1) {
                     continue;
@@ -45,6 +50,7 @@ class Puzzle {
                 GameState next = current.clone();
                 next.swap(neighbor);
                 if (visited.find(next.hash()) == visited.end()) {
+                    next.setHeuristicScore(_heuristic(next, _solution)); //should add level as well
                     next.push_move(move.first);
                     queue.push(next);
                 }

@@ -15,6 +15,12 @@ class GameState {
     struct Point {
         Point(int x = 0, int y = 0) : x(x), y(y) {}
 
+        Point & operator=(Point const &rhs) {
+            x = rhs.x;
+            y = rhs.y;
+            return *this;
+        }
+
         bool operator==(const Point& other) const {
             return x == other.x && y == other.y;
         }
@@ -86,9 +92,22 @@ class GameState {
 
     virtual ~GameState() {}
 
+    GameState& operator=(const GameState& rhs)
+    {
+        _data = rhs._data;
+        _size = rhs._size;
+        _hash = rhs._hash;
+        _reverseData = rhs._reverseData;
+        _zero = rhs._zero;
+        _moves = rhs._moves;
+        _heuristicScore = rhs._heuristicScore;
+        return *this;
+    }
+
     GameState clone() const {
         auto g = GameState(_data, _size, _table);
         g._moves = _moves;
+        g._heuristicScore = _heuristicScore;
         return g;
     }
 
@@ -113,6 +132,18 @@ class GameState {
     // static size_t find(const GameState &rhs, size_t value) {
     //     return rhs._reverseData[value];
     // }
+
+    void setHeuristicScore(double score) {
+        _heuristicScore = score;
+    }
+
+    double getHeuristicScore() const {
+        return _heuristicScore;
+    }
+
+    static double noHeuristic(const GameState &lhs, const GameState &rhs) {
+        return 0;
+    }
 
     static double manhattanDistance(const GameState &lhs, const GameState &rhs) { // heuristic nb 1
         double distance = 0;
@@ -232,6 +263,10 @@ class GameState {
         return _data[p.x + p.y * _size];
     }
 
+    friend bool operator>(const GameState &lhs, const GameState &rhs) {
+        return lhs._heuristicScore > rhs._heuristicScore;
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const GameState& table) {
         for (size_t i = 0; i < table._size; i++) {
             for (size_t j = 0; j < table._size; j++)
@@ -255,8 +290,9 @@ class GameState {
     Point _zero;
     std::vector<Direction> _moves;
     const RandomTable& _table;
+    double          _heuristicScore;
 
-    GameState& operator=(const GameState&) = delete;
+    // GameState& operator=(const GameState&) = delete;
 };
 
 std::map<GameState::Direction, GameState::Point> GameState::directions = {

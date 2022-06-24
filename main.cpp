@@ -7,11 +7,6 @@
 
 int main(int argc, char *argv[])
 {
-    // static double (*heuristic[])(const GameState &lhs, const GameState &rhs) = {
-    //             GameState::manhattanDistance,
-    //             GameState::linearConflict,
-    //             GameState::outOfRowNColumn
-    // };
     if (argc != 3)
     {
         std::cout << "Missing arg" << std::endl;

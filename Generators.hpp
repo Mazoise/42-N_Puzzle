@@ -40,6 +40,8 @@ class Generators {
             return &GameState::linearConflict;
         else if (option == "-rc")
             return &GameState::outOfRowNColumn;
+        else if (option == "-nh")
+            return &GameState::noHeuristic;
         else
             throw std::invalid_argument("Invalid heuristic option, add -mh, -lc or -rc");
     }
