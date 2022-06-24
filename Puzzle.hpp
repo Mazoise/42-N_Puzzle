@@ -12,11 +12,12 @@ typedef std::vector<GameState::Direction> Solution;
 
 class Puzzle {
   public:
-    Puzzle(const std::vector<int>& data):
+    Puzzle(double (*heuristic)(const GameState &lhs, const GameState &rhs), const std::vector<int>& data):
         _size(std::sqrt(data.size())),
         _table(RandomTable(_size)),
         _initial(data, _size, _table),
-        _solution(GameState(Generators::generateSolution(_size), _size, _table))
+        _solution(GameState(Generators::generateSolution(_size), _size, _table)),
+        _heuristic(heuristic)
     {}
 
     //A* search, return right sequence of moves for n-puzzle
@@ -68,4 +69,5 @@ class Puzzle {
     RandomTable _table;
     GameState _initial;
     GameState _solution;
+    double (*_heuristic)(const GameState &lhs, const GameState &rhs);
 };

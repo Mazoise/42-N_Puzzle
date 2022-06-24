@@ -32,6 +32,18 @@ class Generators {
             pos++;
     }
 
+    static double (*(setHeuristic(std::string option)))(const GameState &lhs, const GameState &rhs)
+    {
+        if (option == "-mh")
+            return &GameState::manhattanDistance;
+        else if (option == "-lc")
+            return &GameState::linearConflict;
+        else if (option == "-rc")
+            return &GameState::outOfRowNColumn;
+        else
+            throw std::invalid_argument("Invalid heuristic option, add -mh, -lc or -rc");
+    }
+
     static Data parse_file(std::ifstream &fs)
     {
         std::string line;

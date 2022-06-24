@@ -116,6 +116,7 @@ class GameState {
 
     static double manhattanDistance(const GameState &lhs, const GameState &rhs) { // heuristic nb 1
         double distance = 0;
+        // std::cout << "Heuristic is Manhattan" << std::endl;
         if (rhs._size != lhs._size)
             throw std::invalid_argument("GameStates have different size");
         for (size_t i = 1; i < lhs._reverseData.size(); i++) { // skip 0 (empty box)
@@ -129,6 +130,7 @@ class GameState {
 
     static double linearConflict(const GameState &lhs, const GameState &rhs) {  // heuristic nb 2
         double conflict = manhattanDistance(lhs, rhs);
+        // std::cout << "Heuristic is Linear conflict" << std::endl;
         std::vector<bool> right_column(lhs._size * lhs._size, false); // should we store this in the class? would be faster
         std::vector<bool> right_line(lhs._size * lhs._size, false);
         if (rhs._size != lhs._size)
@@ -179,6 +181,7 @@ class GameState {
 
     static double outOfRowNColumn(const GameState &lhs, const GameState &rhs) { // heuristic nb 3
         double out = 0;
+        // std::cout << "Heuristic is Out of Row/Column" << std::endl;
         if (rhs._size != lhs._size)
             throw std::invalid_argument("GameStates have different size");
         for (size_t i = 1; i < lhs._reverseData.size(); i++) { // skip 0 (empty box)
