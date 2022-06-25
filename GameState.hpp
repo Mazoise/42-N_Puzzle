@@ -135,11 +135,11 @@ class GameState {
     //     return rhs._reverseData[value];
     // }
 
-    void setHeuristicScore(double score) {
+    void setHeuristicScore(size_t score) {
         _heuristicScore = score;
     }
 
-    double getHeuristicScore() const {
+    size_t getHeuristicScore() const {
         return _heuristicScore;
     }
 
@@ -279,7 +279,11 @@ class GameState {
     }
 
     friend bool operator>(const GameState &lhs, const GameState &rhs) {
-        return lhs._heuristicScore > rhs._heuristicScore;
+        size_t f_l = lhs._heuristicScore + lhs._moves.size();
+        size_t f_r = rhs._heuristicScore + rhs._moves.size();
+        if (f_l == f_r)
+            return lhs._heuristicScore > rhs._heuristicScore;
+        return f_l > f_r;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const GameState& table) {
@@ -308,7 +312,7 @@ class GameState {
     Point                   _zero;
     std::vector<Direction>  _moves;
     const RandomTable&      _table;
-    double                  _heuristicScore;
+    size_t                  _heuristicScore;
 
     // GameState& operator=(const GameState&) = delete;
 };

@@ -30,7 +30,7 @@ class Puzzle {
         std::priority_queue<GameState, std::vector<GameState>, std::greater<GameState> > queue;
         GameState::Point last_move;
         // std::unordered_map<uint64_t, uint64_t> came_from;
-        std::unordered_map<uint64_t, size_t> visited;
+        std::unordered_map< uint64_t, size_t > visited;
 
         if(_initial.isSolvable() != _solution.isSolvable()) { // solution solvability can be precalculated for each size
             std::cout << "Solution is not solvable" << std::endl;
@@ -63,11 +63,11 @@ class Puzzle {
                     continue;
                 GameState next = current.clone();
                 next.swap(neighbor);
-                next.setHeuristicScore(_heuristic(next, _solution) + (next.get_moves().size() + 1) - (next.get_moves().size() + 1) * 0.000001); // tie breaking
+                next.setHeuristicScore(_heuristic(next, _solution)); // tie breaking
                 auto already_visited = visited.find(next.hash());
-                if (already_visited == visited.end() || already_visited->second > next.getHeuristicScore()) {
+                if (already_visited == visited.end() || already_visited->second > next.getHeuristicScore() + next.get_moves().size() + 1) {
                     if (already_visited != visited.end())
-                        already_visited->second = next.getHeuristicScore();
+                        already_visited->second = next.getHeuristicScore() + next.get_moves().size() + 1;
                     next.push_move(move.first);
                     queue.push(next);
                     // came_from.insert(std::make_pair(next.hash(), current.hash()));
