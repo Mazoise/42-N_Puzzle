@@ -285,7 +285,10 @@ class GameState {
     friend std::ostream& operator<<(std::ostream& os, const GameState& table) {
         for (size_t i = 0; i < table._size; i++) {
             for (size_t j = 0; j < table._size; j++)
-                os << std::setfill(' ') << std::setw(4) << table._data[i * table._size + j] << " ";
+                if (table._data[i * table._size + j])
+                    os << std::setfill(' ') << std::setw(4) << table._data[i * table._size + j] << " ";
+                else
+                    os << std::setfill(' ') << std::setw(4) << " " << " ";
             os << std::endl;
         }
         // REVERSE DATA :
