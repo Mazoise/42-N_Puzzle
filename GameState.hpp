@@ -135,11 +135,11 @@ class GameState {
     //     return rhs._reverseData[value];
     // }
 
-    void setHeuristicScore(size_t score) {
+    void setHeuristicScore(double score) {
         _heuristicScore = score;
     }
 
-    size_t getHeuristicScore() const {
+    double getHeuristicScore() const {
         return _heuristicScore;
     }
 
@@ -301,15 +301,14 @@ class GameState {
     }
 
   private:
-    std::vector<int> _data;
-    std::vector<int> _reverseData; // gives the index of the value in the _data vector, will speed up the heuristic calculations
-    size_t _size;
-    uint64_t _hash;
-    Point _zero;
-    std::vector<Direction> _moves;
-    const RandomTable& _table;
-    size_t          _heuristicScore;
-
+    std::vector<int>        _data;
+    std::vector<int>         _reverseData; // gives the index of the value in the _data vector, will speed up the heuristic calculations
+    size_t                  _size;
+    uint64_t                _hash;
+    Point                   _zero;
+    std::vector<Direction>  _moves;
+    const RandomTable&      _table;
+    double                  _heuristicScore;
 
     // GameState& operator=(const GameState&) = delete;
 };

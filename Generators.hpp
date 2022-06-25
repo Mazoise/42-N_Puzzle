@@ -56,7 +56,7 @@ class Generators {
         int         nb;
         size_t      tmp_count;
         std::vector<bool> filled;
-        size_t size;
+        size_t size = 0;
         Data data;
 
         while (getline(fs, line))
@@ -102,7 +102,7 @@ class Generators {
                 throw ParsingException("Missing values on line " + std::to_string(line_count) + " of table");
             line_count++;
         }
-        if (line_count - 1 < size)
+        if (line_count == 0 || line_count - 1 < size)
             throw ParsingException("Missing lines in table");
         return data;
     }

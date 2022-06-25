@@ -41,7 +41,7 @@ class Puzzle {
         //     std::cout << "U";
         //     return Solution();
         // }
-        _initial.setHeuristicScore(_heuristic(_initial, _solution)); //should add level as well
+        _initial.setHeuristicScore(_heuristic(_initial, _solution));
         queue.push(_initial); //calls copy constructor
         while (!queue.empty()) {
             GameState current = queue.top();
@@ -63,9 +63,9 @@ class Puzzle {
                     continue;
                 GameState next = current.clone();
                 next.swap(neighbor);
-                next.setHeuristicScore(_heuristic(next, _solution) + next.get_moves().size() + 1); //should add level as well
+                next.setHeuristicScore(_heuristic(next, _solution) + (next.get_moves().size() + 1) - (next.get_moves().size() + 1) * 0.000001); // tie breaking
                 auto already_visited = visited.find(next.hash());
-                if (already_visited == visited.end() || already_visited->second > next.getHeuristicScore()) { // we can add p later if we want to implement tie-breaking
+                if (already_visited == visited.end() || already_visited->second > next.getHeuristicScore()) {
                     if (already_visited != visited.end())
                         already_visited->second = next.getHeuristicScore();
                     next.push_move(move.first);
