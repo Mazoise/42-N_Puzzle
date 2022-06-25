@@ -206,10 +206,19 @@ class GameState {
         return conflict; // each conflict adds at least 2 more steps to solve
     }
 
-    bool isSolvable(const GameState &rhs) {
-        bool result = countInversions(*this, rhs) % 2 == 0;
-        std::cout << (result? "Solvable" : "Unsolvable") << std::endl;
-        return result;//countInversions(lhs, rhs) % 2 == 0;
+    bool isSolvable() {
+        int conflict = 0;
+
+        for (size_t i = 1; i < _reverseData.size() - 1; i++) { // skip 0 (empty box)
+            for (size_t j = i + 1; j < _reverseData.size(); j++) {
+                if (_reverseData[i] > _reverseData[j])
+                    conflict++;
+            }
+        }
+        if (_size % 2 || (_size - _zero.y) % 2 == 0)
+            return conflict % 2 == 0;
+        else
+            return conflict % 2 == 1;
     }
 
     static size_t linearConflict(const GameState &lhs, const GameState &rhs) {  // heuristic nb 2
