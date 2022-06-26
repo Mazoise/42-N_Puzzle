@@ -32,13 +32,13 @@ class Puzzle {
         // std::unordered_map<uint64_t, uint64_t> came_from;
         std::unordered_map< uint64_t, size_t > visited;
 
-        if(_initial.isSolvable() != _solution.isSolvable()) { // solution solvability can be precalculated for each size
-            std::cout << "Solution is not solvable" << std::endl;
+        if(!_initial.isSolvable()) { // solution solvability can be precalculated for each size
+            std::cout << "Puzzle is not solvable" << std::endl;
             return Solution();
         }
         // else // tmp
         // {
-        //     std::cout << "U";
+        //     std::cout << "S";
         //     return Solution();
         // }
         _initial.setHeuristicScore(_heuristic(_initial, _solution));

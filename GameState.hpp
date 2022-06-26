@@ -208,6 +208,7 @@ class GameState {
 
     bool isSolvable() {
         int conflict = 0;
+        bool solvable_solution = ((_size - 2) / 4) % 2;
 
         for (size_t i = 1; i < _reverseData.size() - 1; i++) { // skip 0 (empty box)
             for (size_t j = i + 1; j < _reverseData.size(); j++) {
@@ -216,9 +217,9 @@ class GameState {
             }
         }
         if (_size % 2 || (_size - _zero.y) % 2 == 0)
-            return conflict % 2 == 0;
+            return conflict % 2 != solvable_solution;
         else
-            return conflict % 2 == 1;
+            return conflict % 2 == solvable_solution;
     }
 
     static size_t linearConflict(const GameState &lhs, const GameState &rhs) {  // heuristic nb 2
@@ -258,17 +259,9 @@ class GameState {
         return Point(index % _size, (int)(index / _size));
     }
 
-    // static Point getPoint(size_t index, size_t size) {
-    //     return Point(index % size, (int)(index / size));
-    // }
-
     int getIndex(const Point& p) const {
         return p.y * _size + p.x;
     }
-
-    // static int getIndex(const Point& p, size_t size) {
-    //     return p.y * size + p.x;
-    // }
 
     int operator[](Point p) const {
         return _data[p.x + p.y * _size];
@@ -306,7 +299,7 @@ class GameState {
 
   private:
     std::vector<int>        _data;
-    std::vector<int>         _reverseData; // gives the index of the value in the _data vector, will speed up the heuristic calculations
+    std::vector<int>        _reverseData; // gives the index of the value in the _data vector, will speed up the heuristic calculations
     size_t                  _size;
     uint64_t                _hash;
     Point                   _zero;

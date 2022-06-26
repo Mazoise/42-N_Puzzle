@@ -16,8 +16,8 @@ int main(int argc, char *argv[])
     try {
         Puzzle puzzle(Generators::setHeuristic(argv[1]), Generators::fromFile(argv[2]));
         auto solution = puzzle.solve();
-        std::cout << solution.size() << std::endl;
-        puzzle.play(solution);
+        // std::cout << solution.size() << std::endl;
+        // puzzle.play(solution);
     } catch (Generators::ParsingException e) {
         std::cout << "Parsing error : " << e.what() << std::endl;
         return 1;
