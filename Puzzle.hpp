@@ -19,7 +19,7 @@ class Puzzle {
         _size(std::sqrt(data.size())),
         _table(RandomTable(_size)),
         _initial(data, _size, _table),
-        _solution(GameState(Generators::generateSolution(_size), _size, _table)),
+        _solution(Generators::generateSolution(_size), _size, _table),
         _heuristic(heuristic),
         _total_states(0),
         _max_ressource(0)
@@ -44,10 +44,10 @@ class Puzzle {
         _initial.setHeuristicScore(_heuristic(_initial, _solution));
         queue.push(_initial); //calls copy constructor
         while (!queue.empty()) {
-            GameState current = queue.top();
+            GameState current(std::move(const_cast<GameState&>(queue.top()))); // hack to move out of priority_queue, safe because we pop just after
+            queue.pop();
             if (queue.size() + visited.size() > _max_ressource)
                 _max_ressource = queue.size() + visited.size();
-            queue.pop();
             _total_states++;
             if (current.hash() == _solution.hash()) {
                 return current.get_moves();
@@ -61,7 +61,7 @@ class Puzzle {
                 GameState::Point neighbor = current.neighbor(move.first);
                 if (!neighbor.in_bounds(_size))
                     continue;
-                GameState next = current.clone();
+                GameState next(current);
                 next.swap(neighbor);
                 next.setHeuristicScore(_heuristic(next, _solution)); // tie breaking
                 auto already_visited = visited.find(next.hash());
@@ -69,7 +69,7 @@ class Puzzle {
                     if (already_visited != visited.end())
                         already_visited->second = next.getHeuristicScore() + next.get_moves().size() + 1;
                     next.push_move(move.first);
-                    queue.push(next);
+                    queue.push(std::move(next));
                     // came_from.insert(std::make_pair(next.hash(), current.hash()));
                 }
             }
@@ -79,7 +79,7 @@ class Puzzle {
     }
 
     void play(const Solution& sol) {
-        GameState current = _initial.clone();
+        GameState current(_initial);
 
         for (auto& move : sol) {
             auto neighbor = current.neighbor(move);

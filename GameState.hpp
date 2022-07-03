@@ -90,12 +90,10 @@ class GameState {
             _reverseData[_data[i]] = i;
         }
         _zero = getPoint(find(0));
+        // std::cout << "constructor" << std::endl;
     }
 
-    virtual ~GameState() {}
-
-    GameState& operator=(const GameState& rhs)
-    {
+    GameState(const GameState& rhs): _table(rhs._table) {
         _data = rhs._data;
         _size = rhs._size;
         _hash = rhs._hash;
@@ -103,17 +101,36 @@ class GameState {
         _zero = rhs._zero;
         _moves = rhs._moves;
         _heuristicScore = rhs._heuristicScore;
+        // std::cout << "copy constructor" << std::endl;
+    }
+
+    GameState(GameState&& rhs): _table(rhs._table) {
+        _data = std::move(rhs._data);
+        _size = std::move(rhs._size);
+        _hash = std::move(rhs._hash);
+        _reverseData = std::move(rhs._reverseData);
+        _zero = std::move(rhs._zero);
+        _moves = std::move(rhs._moves);
+        _heuristicScore = std::move(rhs._heuristicScore);
+        // std::cout << "move constructor" << std::endl;
+    }
+
+    virtual ~GameState() {}
+
+    GameState& operator=(GameState&& rhs)
+    {
+        _data = std::move(rhs._data);
+        _size = std::move(rhs._size);
+        _hash = std::move(rhs._hash);
+        _reverseData = std::move(rhs._reverseData);
+        _zero = std::move(rhs._zero);
+        _moves = std::move(rhs._moves);
+        _heuristicScore = std::move(rhs._heuristicScore);
+        // std::cout << "move operator" << std::endl;
         return *this;
     }
 
-    GameState clone() const {
-        auto g = GameState(_data, _size, _table);
-        g._moves = _moves;
-        g._heuristicScore = _heuristicScore;
-        return g;
-    }
-
-    Point neighbor(Direction d) {
+    Point neighbor(Direction d) const {
         return _zero + directions[d];
     }
 
@@ -307,7 +324,7 @@ class GameState {
     const RandomTable&      _table;
     size_t                  _heuristicScore;
 
-    // GameState& operator=(const GameState&) = delete;
+    GameState& operator=(const GameState&) = delete;
 };
 
 std::map<GameState::Direction, GameState::Point> GameState::directions = {
