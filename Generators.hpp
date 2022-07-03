@@ -8,7 +8,13 @@
 #include "RandomTable.hpp"
 
 typedef std::vector<int> Data;
-typedef size_t (*heuristic_t)(const GameState &lhs, const GameState &rhs);
+typedef size_t (*heuristic_f)(const GameState &lhs, const GameState &rhs);
+typedef int (*update_heuristic_f)(const GameState &lhs, const GameState &rhs, const GameState::Point &point);
+
+struct heuristic_t {
+    heuristic_f full;
+    update_heuristic_f update;
+};
 
 class Generators {
   public:
@@ -35,16 +41,22 @@ class Generators {
 
     static heuristic_t setHeuristic(std::string option)
     {
+        heuristic_t heuristic;
         if (option == "-mh")
-            return &GameState::manhattan;
+            heuristic = {.full = &GameState::manhattan,
+                         .update = &GameState::updateManhattan};
         else if (option == "-lc")
-            return &GameState::linearConflict;
+            heuristic = {.full = &GameState::linearConflict,
+                         .update = &GameState::updateLinearConflict};
         else if (option == "-hg")
-            return &GameState::hamming;
+            heuristic = {.full = &GameState::hamming,
+                         .update = &GameState::updateHamming};
         else if (option == "-nh")
-            return &GameState::noHeuristic;
+            heuristic = {.full = &GameState::noHeuristic,
+                         .update = &GameState::updateNoHeuristic};
         else
             throw std::invalid_argument("Invalid heuristic option, add -mh, -lc or -rc");
+        return heuristic;
     }
 
     static Data parse_file(std::ifstream &fs)

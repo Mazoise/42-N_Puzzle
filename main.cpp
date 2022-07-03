@@ -21,6 +21,9 @@ int main(int argc, char *argv[])
     } catch (Generators::ParsingException e) {
         std::cout << "Parsing error : " << e.what() << std::endl;
         return 1;
+    } catch (std::invalid_argument e) {
+        std::cout << "Invalid argument : " << e.what() << std::endl;
+        return 1;
     } catch (std::exception e) {
         std::cout << "Error : " << e.what() << std::endl;
         throw;

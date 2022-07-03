@@ -41,7 +41,7 @@ class Puzzle {
         //     std::cout << "S";
         //     return Solution();
         // }
-        _initial.setHeuristicScore(_heuristic(_initial, _solution));
+        _initial.setHeuristicScore(_heuristic.full(_initial, _solution));
         queue.push(_initial); //calls copy constructor
         while (!queue.empty()) {
             GameState current(std::move(const_cast<GameState&>(queue.top()))); // hack to move out of priority_queue, safe because we pop just after
@@ -63,7 +63,8 @@ class Puzzle {
                     continue;
                 GameState next(current);
                 next.swap(neighbor);
-                next.setHeuristicScore(_heuristic(next, _solution)); // tie breaking
+                next.setHeuristicScore(_heuristic.full(next, _solution)); // tie breaking
+                std::cerr << next.getHeuristicScore() << std::endl;
                 auto already_visited = visited.find(next.hash());
                 if (already_visited == visited.end() || already_visited->second > next.getHeuristicScore() + next.get_moves().size() + 1) {
                     if (already_visited != visited.end())
@@ -94,11 +95,11 @@ class Puzzle {
     }
 
   private:
-    size_t      _size;
-    RandomTable _table;
-    GameState   _initial;
-    GameState   _solution;
-    heuristic_t _heuristic;
-    size_t      _total_states;
-    size_t      _max_ressource;
+    size_t              _size;
+    RandomTable         _table;
+    GameState           _initial;
+    GameState           _solution;
+    heuristic_t         _heuristic;
+    size_t              _total_states;
+    size_t              _max_ressource;
 };

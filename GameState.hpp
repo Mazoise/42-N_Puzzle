@@ -164,6 +164,10 @@ class GameState {
         return 0;
     }
 
+    static int updateNoHeuristic(const GameState &, const GameState &, const Point &) {
+        return 0;
+    }
+
     static size_t manhattan(const GameState &lhs, const GameState &rhs) { // heuristic nb 1
         size_t distance = 0;
         // std::cout << "Heuristic is Manhattan" << std::endl;
@@ -176,6 +180,14 @@ class GameState {
         }
         // std::cout << std::endl;
         return distance;
+    }
+
+    static int updateManhattan(const GameState &lhs, const GameState &rhs, const Point &neighbor) { 
+        if (rhs._size != lhs._size)
+            throw std::invalid_argument("GameStates have different size");
+        Point dest = rhs.getPoint(rhs.find(lhs[neighbor]));
+        Point p = lhs._zero;
+        return p.distance(dest) - neighbor.distance(dest);
     }
 
     static size_t countInversions(const GameState &lhs, const GameState &rhs) {
@@ -223,6 +235,36 @@ class GameState {
         return conflict; // each conflict adds at least 2 more steps to solve
     }
 
+    static int updateInversions(const GameState &lhs, const GameState &rhs, const Point &point) {
+        size_t old_conflict = 0;
+        size_t new_conflict = 0;
+        if (rhs._size != lhs._size)
+            throw std::invalid_argument("GameStates have different size");
+        size_t value = lhs[point];
+        Point dest = rhs.getPoint(rhs.find(value));
+        (void)dest; // unused variable
+        // Point p = lhs.getPoint(lhs.find(0));
+        // if (p.x == dest.x && p.y != dest.y) {
+        //     right_row[lhs.find(0)] = true;
+        // }
+        // if (p.y == dest.y && p.x != dest.x) { // true if right column AND wrong line
+        //     right_column[lhs.find(0)] = true; // index is the index, we don't care about the value in this function
+        // }
+        // p = lhs.getPoint(0);
+        // Point tmp;
+        // for (p.y = 0; (size_t)p.y < lhs._size; p.y++) {
+        //     for (p.x = 0; (size_t)p.x < lhs._size; p.x++) { // for each box except 0
+        //         if (lhs[p] == 0)
+        //             continue;
+        //         if (right_row[lhs.getIndex(p)]) {
+        //             tmp = p;
+        //             while((size_t)tmp.y < lhs._size - 1) {
+        //                 tmp += directions[DOWN];
+        //                 if (lhs[tmp] != 0 && right_row[lhs.getIndex(tmp)]) // find a box that is in it's right line too
+        //                     conflict += rhs.getPoint(rhs.find(lhs[p])).y > rhs.getPoint(rhs.find(lhs[tmp])).y; // check if boxes are switched (here we always have p.y > tmp.y so
+        return new_conflict - old_conflict;
+    }
+
     bool isSolvable() {
         int conflict = 0;
         bool solvable_solution = ((_size - 2) / 4) % 2;
@@ -243,6 +285,10 @@ class GameState {
         return  manhattan(lhs, rhs) + countInversions(lhs, rhs) * 2;
     }
 
+    static int updateLinearConflict(const GameState &lhs, const GameState &rhs, const Point &neighbor) {
+        return (updateManhattan(lhs, rhs, neighbor) + updateInversions(lhs, rhs, neighbor) * 2);
+    }
+
     static size_t hamming(const GameState &lhs, const GameState &rhs) { // heuristic nb 3
         size_t out = 0;
         // std::cout << "Heuristic is Out of Row/Column" << std::endl;
@@ -254,6 +300,12 @@ class GameState {
                 out++;
         }
         return out;
+    }
+
+    static int updateHamming(const GameState &lhs, const GameState &rhs, const Point &neighbor) {
+        Point dest = rhs.getPoint(rhs.find(lhs[neighbor]));
+        return (lhs._zero.x != dest.x && lhs._zero.y != dest.y)
+             - (neighbor.x != dest.x && neighbor.y != dest.y);
     }
 
     void push_move(Direction d) {
