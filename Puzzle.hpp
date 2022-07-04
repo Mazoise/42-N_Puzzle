@@ -52,7 +52,7 @@ class Puzzle {
             if (current.hash() == _solution.hash()) {
                 return current.get_moves();
             }
-            visited.insert(std::make_pair(current.hash(), current.getHeuristicScore()));
+            visited.insert(std::make_pair(current.hash(), current.getHeuristicScore() + current.get_moves().size()));
             for (auto& move : current.directions) {
                 if (move.second == last_move * -1) {
                     continue;
@@ -62,9 +62,10 @@ class Puzzle {
                 if (!neighbor.in_bounds(_size))
                     continue;
                 GameState next(current);
+                next.setHeuristicScore(next.getHeuristicScore() + _heuristic.update(next, _solution, neighbor));
                 next.swap(neighbor);
-                next.setHeuristicScore(_heuristic.full(next, _solution)); // tie breaking
-                std::cerr << next.getHeuristicScore() << std::endl;
+                // next.setHeuristicScore(_heuristic.full(next, _solution)); // old version of heuristic, not used anymore (not opti)
+                // std::cerr << next.getHeuristicScore() << std::endl;
                 auto already_visited = visited.find(next.hash());
                 if (already_visited == visited.end() || already_visited->second > next.getHeuristicScore() + next.get_moves().size() + 1) {
                     if (already_visited != visited.end())

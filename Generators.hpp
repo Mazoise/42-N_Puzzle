@@ -55,7 +55,7 @@ class Generators {
             heuristic = {.full = &GameState::noHeuristic,
                          .update = &GameState::updateNoHeuristic};
         else
-            throw std::invalid_argument("Invalid heuristic option, add -mh, -lc or -rc");
+            throw std::invalid_argument("Invalid heuristic option, add -mh, -lc or -hg or -nh");
         return heuristic;
     }
 

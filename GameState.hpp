@@ -170,15 +170,12 @@ class GameState {
 
     static size_t manhattan(const GameState &lhs, const GameState &rhs) { // heuristic nb 1
         size_t distance = 0;
-        // std::cout << "Heuristic is Manhattan" << std::endl;
         if (rhs._size != lhs._size)
             throw std::invalid_argument("GameStates have different size");
         for (size_t i = 1; i < lhs._reverseData.size(); i++) { // skip 0 (empty box)
             Point p = lhs.getPoint(lhs.find(i));
-            // std::cout << p.distance(rhs.getPoint(rhs.find(i))) << " ";
             distance += p.distance(rhs.getPoint(rhs.find(i)));
         }
-        // std::cout << std::endl;
         return distance;
     }
 
@@ -192,17 +189,17 @@ class GameState {
 
     static size_t countInversions(const GameState &lhs, const GameState &rhs) {
         size_t conflict = 0;
-        std::vector<bool> right_column(lhs._size * lhs._size, false); // should we store this in the class? would be faster
+        std::vector<bool> right_column(lhs._size * lhs._size, false);
         std::vector<bool> right_row(lhs._size * lhs._size, false);
 
         if (rhs._size != lhs._size)
             throw std::invalid_argument("GameStates have different size");
         for (size_t i = 1; i < lhs._reverseData.size(); i++) { // skip 0 (empty box)
             Point p = lhs.getPoint(lhs.find(i));
-            if (p.x == rhs.getPoint(rhs.find(i)).x && p.y != rhs.getPoint(rhs.find(i)).y) {
+            if (p.x == rhs.getPoint(rhs.find(i)).x) {
                 right_row[lhs.find(i)] = true;
             }
-            if (p.y == rhs.getPoint(rhs.find(i)).y && p.x != rhs.getPoint(rhs.find(i)).x) { // true if right column AND wrong line
+            if (p.y == rhs.getPoint(rhs.find(i)).y) { // true if right column AND wrong line
                 right_column[lhs.find(i)] = true; // index is the index, we don't care about the value in this function
             }
         }
@@ -218,7 +215,6 @@ class GameState {
                         tmp += directions[DOWN];
                         if (lhs[tmp] != 0 && right_row[lhs.getIndex(tmp)]) // find a box that is in it's right line too
                             conflict += rhs.getPoint(rhs.find(lhs[p])).y > rhs.getPoint(rhs.find(lhs[tmp])).y; // check if boxes are switched (here we always have p.y > tmp.y so if final_p.y < final_tmp.y then we have a conflict)
-                            // std::cerr << "Vertical linear conflict  between " << lhs[p] << " and " << lhs[tmp] << std::endl;
                     }
                 }
                 if (right_column[lhs.getIndex(p)]) {
@@ -227,42 +223,67 @@ class GameState {
                         tmp += directions[RIGHT];
                         if (lhs[tmp] != 0 && right_column[lhs.getIndex(tmp)])
                             conflict += rhs.getPoint(rhs.find(lhs[p])).x > rhs.getPoint(rhs.find(lhs[tmp])).x;
-                            // std::cerr << "Horizontal linear conflict between " << lhs[p] << " and " << lhs[tmp] << std::endl;
                     }
                 }
             }
         }
-        return conflict; // each conflict adds at least 2 more steps to solve
+        return conflict;
     }
 
-    static int updateInversions(const GameState &lhs, const GameState &rhs, const Point &point) {
-        size_t old_conflict = 0;
-        size_t new_conflict = 0;
+    static int countColumnInversions(const GameState &lhs, const GameState &rhs, const Point &point, const int value) {
+        size_t  conflict = 0;
+        Point   other;
+        Point   other_dest;
+        Point   dest = rhs.getPoint(rhs.find(value));
+
+        if (point.x == dest.x) {
+            for (other = Point(point.x, 0); other.y < (int)lhs._size; other += directions[DOWN]) {
+                other_dest = rhs.getPoint(rhs.find(lhs[other]));
+                if (lhs[other] != value && lhs[other] != 0
+                    && other.x == other_dest.x) {
+                    if (other.y > point.y)
+                        conflict += dest.y > other_dest.y;
+                    else
+                        conflict += dest.y < other_dest.y;
+                }
+            }
+        }
+        return conflict;
+    }
+
+    static int countRowInversions(const GameState &lhs, const GameState &rhs, const Point &point, const int value)
+    {
+        size_t conflict = 0;
+        Point   other;
+        Point   other_dest;
+        Point dest = rhs.getPoint(rhs.find(value));
+
+        if (point.y == dest.y) {
+            for (other = Point(0, point.y);
+                 other.x < (int)lhs._size;
+                 other += directions[RIGHT]) {
+                other_dest = rhs.getPoint(rhs.find(lhs[other]));
+                if (lhs[other] != value && lhs[other] != 0
+                && other.y == other_dest.y) {
+                    if (other.x > point.x)
+                        conflict += dest.x > other_dest.x;
+                    else
+                        conflict += dest.x < other_dest.x;
+                }
+            }
+        }
+        return conflict;
+    }
+
+    static int updateInversions(const GameState &lhs, const GameState &rhs, const Point &neighbor) {
         if (rhs._size != lhs._size)
             throw std::invalid_argument("GameStates have different size");
-        size_t value = lhs[point];
-        Point dest = rhs.getPoint(rhs.find(value));
-        (void)dest; // unused variable
-        // Point p = lhs.getPoint(lhs.find(0));
-        // if (p.x == dest.x && p.y != dest.y) {
-        //     right_row[lhs.find(0)] = true;
-        // }
-        // if (p.y == dest.y && p.x != dest.x) { // true if right column AND wrong line
-        //     right_column[lhs.find(0)] = true; // index is the index, we don't care about the value in this function
-        // }
-        // p = lhs.getPoint(0);
-        // Point tmp;
-        // for (p.y = 0; (size_t)p.y < lhs._size; p.y++) {
-        //     for (p.x = 0; (size_t)p.x < lhs._size; p.x++) { // for each box except 0
-        //         if (lhs[p] == 0)
-        //             continue;
-        //         if (right_row[lhs.getIndex(p)]) {
-        //             tmp = p;
-        //             while((size_t)tmp.y < lhs._size - 1) {
-        //                 tmp += directions[DOWN];
-        //                 if (lhs[tmp] != 0 && right_row[lhs.getIndex(tmp)]) // find a box that is in it's right line too
-        //                     conflict += rhs.getPoint(rhs.find(lhs[p])).y > rhs.getPoint(rhs.find(lhs[tmp])).y; // check if boxes are switched (here we always have p.y > tmp.y so
-        return new_conflict - old_conflict;
+        if (neighbor.x == lhs._zero.x)
+            return countRowInversions(lhs, rhs, lhs._zero, lhs[neighbor])
+                 - countRowInversions(lhs, rhs, neighbor, lhs[neighbor]);
+        else
+            return countColumnInversions(lhs, rhs, lhs._zero, lhs[neighbor])
+                 - countColumnInversions(lhs, rhs, neighbor, lhs[neighbor]);
     }
 
     bool isSolvable() {
@@ -286,6 +307,7 @@ class GameState {
     }
 
     static int updateLinearConflict(const GameState &lhs, const GameState &rhs, const Point &neighbor) {
+        std::cout << updateInversions(lhs, rhs, neighbor) << std::endl;
         return (updateManhattan(lhs, rhs, neighbor) + updateInversions(lhs, rhs, neighbor) * 2);
     }
 
