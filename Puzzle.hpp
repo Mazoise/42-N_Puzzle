@@ -10,8 +10,9 @@
 #include <unordered_map>
 #include <utility>
 #include <queue>
+#include <list>
 
-typedef std::vector<GameState::Direction> Solution;
+typedef std::list<GameState::Direction> Solution;
 
 class Puzzle {
   public:
@@ -101,4 +102,5 @@ class Puzzle {
     heuristic_t _heuristic;
     size_t      _total_states;
     size_t      _max_ressource;
+    std::map<uint64_t, GameState::Direction> _came_from;
 };
