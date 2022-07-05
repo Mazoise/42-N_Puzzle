@@ -5,7 +5,7 @@
 #include <vector>
 #include <iomanip>
 #include <algorithm>
-#include <unordered_map>
+#include <map>
 #include <memory>
 #include "RandomTable.hpp"
 
@@ -78,7 +78,7 @@ class GameState {
         UP
     };
 
-    static std::unordered_map<Direction, Point> directions;
+    static std::map<Direction, Point> directions;
 
     GameState(const std::vector<int>& data, size_t size, const RandomTable &table) : _data(data), _size(size), _table(table), _depth(0) {
         _hash = 0;
@@ -90,7 +90,7 @@ class GameState {
             _reverseData[_data[i]] = i;
         }
         _zero = getPoint(find(0));
-        std::cout << "constructor" << std::endl;
+        // std::cout << "constructor" << std::endl;
     }
 
     GameState(const GameState& rhs): _table(rhs._table) {
@@ -332,7 +332,7 @@ class GameState {
     GameState& operator=(const GameState&) = delete;
 };
 
-std::unordered_map<GameState::Direction, GameState::Point> GameState::directions = {
+std::map<GameState::Direction, GameState::Point> GameState::directions = {
     {RIGHT, Point(1, 0)},
     {DOWN, Point(0, 1)},
     {LEFT, Point(-1, 0)},
