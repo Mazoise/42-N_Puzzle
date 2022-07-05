@@ -7,22 +7,26 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc != 3)
+    if (argc < 3) // ignoring if more args
     {
-        std::cout << "Missing arg" << std::endl;
+        std::cerr << "Missing arguments : first argument should be heuristic options\
+ (-h, -l, -m or -n), second should be map file or a size for random map" << std::endl;
         return 1;
     }
     std::srand(time(NULL));
     try {
-        Puzzle puzzle(Generators::setHeuristic(argv[1]), Generators::fromFile(argv[2]));
+        Generators gen;
+        Puzzle puzzle(gen.setHeuristic(argv[1]), gen.initMap(argv[2]), gen.generateSolution());
         auto solution = puzzle.solve();
-        std::cout << solution.size() << std::endl;
         puzzle.play(solution);
     } catch (Generators::ParsingException e) {
-        std::cout << "Parsing error : " << e.what() << std::endl;
+        std::cerr << "Parsing error : " << e.what() << std::endl;
+        return 1;
+    } catch (std::invalid_argument e) {
+        std::cerr << "Invalid argument : " << e.what() << std::endl;
         return 1;
     } catch (std::exception e) {
-        std::cout << "Error : " << e.what() << std::endl;
+        std::cerr << "Error : " << e.what() << std::endl;
         throw;
         return 1;
     }

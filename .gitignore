@@ -1,3 +1,7 @@
 a.out
 .vscode
 *test.txt
+*.map
+*.o
+*.d
+n_puzzle

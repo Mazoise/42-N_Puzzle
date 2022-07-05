@@ -8,10 +8,19 @@
 #include "RandomTable.hpp"
 
 typedef std::vector<int> Data;
-typedef size_t (*heuristic_t)(const GameState &lhs, const GameState &rhs);
+typedef size_t (*heuristic_f)(const GameState &lhs, const GameState &rhs);
+typedef int (*update_heuristic_f)(const GameState &lhs, const GameState &rhs, const GameState::Point &point);
+
+struct heuristic_t {
+    heuristic_f full;
+    update_heuristic_f update;
+};
 
 class Generators {
   public:
+
+    Generators() : _size(0) {}
+
     class ParsingException : public std::exception {
         public:
             ParsingException(std::string message) : _message(message) {}
@@ -28,26 +37,33 @@ class Generators {
             ~FileReader() { close(); }
     };
 
-    static void skip_whitespace(std::string &line, size_t &pos) {
+    void skip_whitespace(std::string &line, size_t &pos) {
         while (pos < line.size() && isspace(line[pos]))
             pos++;
     }
 
-    static heuristic_t setHeuristic(std::string option)
+    heuristic_t setHeuristic(std::string option)
     {
-        if (option == "-mh")
-            return &GameState::manhattan;
-        else if (option == "-lc")
-            return &GameState::linearConflict;
-        else if (option == "-hg")
-            return &GameState::hamming;
-        else if (option == "-nh")
-            return &GameState::noHeuristic;
+        heuristic_t heuristic;
+        if (option == "-m" || option == "--manhattan")
+            heuristic = {.full = &GameState::manhattan,
+                         .update = &GameState::updateManhattan};
+        else if (option == "-l" || option == "--linearconflict")
+            heuristic = {.full = &GameState::linearConflict,
+                         .update = &GameState::updateLinearConflict};
+        else if (option == "-h" || option == "--hamming")
+            heuristic = {.full = &GameState::hamming,
+                         .update = &GameState::updateHamming};
+        else if (option == "-n" || option == "--none")
+            heuristic = {.full = &GameState::noHeuristic,
+                         .update = &GameState::updateNoHeuristic};
         else
-            throw std::invalid_argument("Invalid heuristic option, add -mh, -lc or -rc");
+            throw std::invalid_argument("Invalid heuristic option \"" + option + "\", options are:\n\
+ -m or --manhattan\n -l or --linearconflict\n -h or --hamming\n -n or --none");
+        return heuristic;
     }
 
-    static Data parse_file(std::ifstream &fs)
+    Data parse_file(std::ifstream &fs)
     {
         std::string line;
         size_t      line_count = 0;
@@ -77,7 +93,7 @@ class Generators {
                     if (column_count != 0)
                         throw ParsingException("First line should only contain the size of the table");
                     if (nb < 2)
-                        throw ParsingException("Table size should be at least 2");
+                        throw ParsingException("Table size should be at least 3");
                     size = nb;
                     data.resize(nb * nb);
                     filled = std::vector<bool>(nb * nb, false);
@@ -104,13 +120,28 @@ class Generators {
         }
         if (line_count == 0 || line_count - 1 < size)
             throw ParsingException("Missing lines in table");
+        _size = size;
         return data;
     }
 
-    static Data fromFile(std::string filename) {
-        FileReader fs(filename);
+    Data initMap(std::string argument) {
+        FileReader fs(argument);
         if (!fs.is_open()) {
-            throw ParsingException("Error opening " + filename + " : " + std::strerror(errno));
+            if (errno == 2) // No such file or directory
+                try {
+                    _size = std::stoi(argument); // Try to parse argument as size of map
+                    if (_size <= 2)
+                        throw ParsingException("Table size should be at least 3");
+                    return generateRandom();
+                }
+                catch (ParsingException &e) {
+                    throw ParsingException(e);
+                }
+                catch (std::exception &e) { 
+                    throw ParsingException("Error opening \"" + argument + "\" : " + std::strerror(2));
+                }
+            else
+                throw ParsingException("Error opening \"" + argument + "\" : " + std::strerror(errno));
         }
         try {
             return parse_file(fs);
@@ -121,23 +152,23 @@ class Generators {
         }
     }
 
-    static bool isEmptyBox(std::vector<int> table, size_t size, const GameState::Point& p) {
-        if (!p.in_bounds(size))
+    bool isEmptyBox(std::vector<int> table, const GameState::Point& p) {
+        if (!p.in_bounds(_size))
             return false;
-        return table[p.y * size + p.x] == 0;
+        return table[p.y * _size + p.x] == 0;
     }
 
-    static Data generateSolution(size_t size)
+    Data generateSolution()
     {
-        Data data(size * size);
+        Data data(_size * _size);
         size_t value = 0;
         GameState::Point pos;
 
         auto dir = GameState::directions.begin();
-        while (value < size * size - 1)
+        while (value < _size * _size - 1)
         {
-            data[pos.y * size + pos.x] = ++value;
-            if (!isEmptyBox(data, size, pos + dir->second)) {
+            data[pos.y * _size + pos.x] = ++value;
+            if (!isEmptyBox(data, pos + dir->second)) {
                 ++dir;
                 if (dir == GameState::directions.end())
                     dir = GameState::directions.begin();
@@ -147,12 +178,15 @@ class Generators {
         return data;
     }
 
-    static Data generateRandom(size_t size){
-        Data data(size * size);
-        for (size_t i = 0; i < size * size; i++)
+    Data generateRandom(){
+        Data data(_size * _size);
+        for (size_t i = 0; i < _size * _size; i++)
             data[i] = i;
         std::random_shuffle(data.begin(), data.end());
         return data;
     }
 
+  private:
+
+    size_t _size;
 };
