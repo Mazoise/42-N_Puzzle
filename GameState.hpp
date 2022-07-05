@@ -5,7 +5,7 @@
 #include <vector>
 #include <iomanip>
 #include <algorithm>
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include "RandomTable.hpp"
 
@@ -78,9 +78,9 @@ class GameState {
         UP
     };
 
-    static std::map<Direction, Point> directions;
+    static std::unordered_map<Direction, Point> directions;
 
-    GameState(const std::vector<int>& data, size_t size, const RandomTable &table) : _data(data), _size(size), _table(table) {
+    GameState(const std::vector<int>& data, size_t size, const RandomTable &table) : _data(data), _size(size), _table(table), _depth(0) {
         _hash = 0;
         for (size_t i = 0; i < _data.size(); ++i)
             if (_data[i] != 0)
@@ -90,7 +90,7 @@ class GameState {
             _reverseData[_data[i]] = i;
         }
         _zero = getPoint(find(0));
-        // std::cout << "constructor" << std::endl;
+        std::cout << "constructor" << std::endl;
     }
 
     GameState(const GameState& rhs): _table(rhs._table) {
@@ -99,19 +99,19 @@ class GameState {
         _hash = rhs._hash;
         _reverseData = rhs._reverseData;
         _zero = rhs._zero;
-        _moves = rhs._moves;
+        _depth = rhs._depth;
         _heuristicScore = rhs._heuristicScore;
         // std::cout << "copy constructor" << std::endl;
     }
 
     GameState(GameState&& rhs): _table(rhs._table) {
         _data = std::move(rhs._data);
-        _size = std::move(rhs._size);
-        _hash = std::move(rhs._hash);
         _reverseData = std::move(rhs._reverseData);
-        _zero = std::move(rhs._zero);
-        _moves = std::move(rhs._moves);
-        _heuristicScore = std::move(rhs._heuristicScore);
+        _size = rhs._size;
+        _hash = rhs._hash;
+        _zero = rhs._zero;
+        _depth = rhs._depth;
+        _heuristicScore = rhs._heuristicScore;
         // std::cout << "move constructor" << std::endl;
     }
 
@@ -120,12 +120,12 @@ class GameState {
     GameState& operator=(GameState&& rhs)
     {
         _data = std::move(rhs._data);
-        _size = std::move(rhs._size);
-        _hash = std::move(rhs._hash);
         _reverseData = std::move(rhs._reverseData);
-        _zero = std::move(rhs._zero);
-        _moves = std::move(rhs._moves);
-        _heuristicScore = std::move(rhs._heuristicScore);
+        _size = rhs._size;
+        _hash = rhs._hash;
+        _zero = rhs._zero;
+        _depth = rhs._depth;
+        _heuristicScore = rhs._heuristicScore;
         // std::cout << "move operator" << std::endl;
         return *this;
     }
@@ -142,6 +142,7 @@ class GameState {
         _reverseData[0] = getIndex(neighbor); 
         _reverseData[(*this)[_zero]] = getIndex(_zero);
         _zero = neighbor;
+        ++_depth;
     }
 
     size_t find(size_t value) const {
@@ -158,6 +159,10 @@ class GameState {
 
     size_t getHeuristicScore() const {
         return _heuristicScore;
+    }
+
+    size_t getDepth() const {
+        return _depth;
     }
 
     static size_t noHeuristic(const GameState &, const GameState &) {
@@ -256,14 +261,6 @@ class GameState {
         return out;
     }
 
-    void push_move(Direction d) {
-        _moves.push_back(d);
-    }
-
-    std::vector<Direction> get_moves() const {
-        return _moves;
-    }
-
     size_t size() const {
         return _size;
     }
@@ -289,11 +286,19 @@ class GameState {
     }
 
     friend bool operator>(const GameState &lhs, const GameState &rhs) {
-        size_t f_l = lhs._heuristicScore + lhs._moves.size();
-        size_t f_r = rhs._heuristicScore + rhs._moves.size();
+        size_t f_l = lhs._heuristicScore + lhs._depth;
+        size_t f_r = rhs._heuristicScore + rhs._depth;
         if (f_l == f_r)
             return lhs._heuristicScore > rhs._heuristicScore;
         return f_l > f_r;
+    }
+
+    friend bool operator==(const GameState &lhs, const GameState &rhs) {
+        return lhs._hash == rhs._hash;
+    }
+
+    friend bool operator!=(const GameState &lhs, const GameState &rhs) {
+        return !(lhs == rhs);
     }
 
     friend std::ostream& operator<<(std::ostream& os, const GameState& table) {
@@ -320,14 +325,14 @@ class GameState {
     size_t                  _size;
     uint64_t                _hash;
     Point                   _zero;
-    std::vector<Direction>  _moves;
     const RandomTable&      _table;
+    size_t                  _depth;
     size_t                  _heuristicScore;
 
     GameState& operator=(const GameState&) = delete;
 };
 
-std::map<GameState::Direction, GameState::Point> GameState::directions = {
+std::unordered_map<GameState::Direction, GameState::Point> GameState::directions = {
     {RIGHT, Point(1, 0)},
     {DOWN, Point(0, 1)},
     {LEFT, Point(-1, 0)},
