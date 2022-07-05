@@ -22,7 +22,7 @@ DEPS		=	${OBJS:.o=.d}
 
 CXX			=	clang++
 
-CXXFLAGS	=	-Werror -Wextra -Wall -MMD
+CXXFLAGS	=	-Werror -Wextra -Wall -MMD -O3
 
 NAME 		=	n_puzzle
 

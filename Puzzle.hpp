@@ -11,6 +11,7 @@
 #include <utility>
 #include <queue>
 #include <list>
+#include <map>
 
 typedef std::list<GameState::Direction> Solution;
 
@@ -40,7 +41,7 @@ class Puzzle {
         while (!queue.empty()) {
             GameState current(std::move(const_cast<GameState&>(queue.top()))); // hack to move out of priority_queue, safe because we pop just after
             queue.pop();
-            if (current.hash() == _solution.hash()) {
+            if (current == _solution) {
                 return constructSolution();
             }
             visited.insert(std::make_pair(current.hash(), current.getDepth()));
@@ -74,7 +75,7 @@ class Puzzle {
 
     Solution constructSolution() {
         GameState current(_solution);
-        std::unordered_map<GameState::Direction, GameState::Direction> reverse = {
+        std::map<GameState::Direction, GameState::Direction> reverse = {
             {GameState::LEFT, GameState::RIGHT},
             {GameState::RIGHT, GameState::LEFT},
             {GameState::UP, GameState::DOWN},
@@ -83,10 +84,10 @@ class Puzzle {
         Solution solution;
 
         while (current != _initial) {
-            GameState::Direction r = reverse[_came_from[current.hash()]];
-            GameState::Point neighbor = current.neighbor(r);
+            GameState::Direction d = _came_from[current.hash()];
+            GameState::Point neighbor = current.neighbor(reverse[d]);
             current.swap(neighbor);
-            solution.push_front(r);
+            solution.push_front(d);
         }
         return solution;
     }
