@@ -5,6 +5,7 @@
 #include <cstring>
 #include <memory>
 #include <utility>
+#include <getopt.h>
 #include "RandomTable.hpp"
 
 typedef std::vector<int> Data;
@@ -12,6 +13,9 @@ typedef size_t (*heuristic_f)(const GameState &lhs, const GameState &rhs);
 typedef int (*update_heuristic_f)(const GameState &lhs, const GameState &rhs, const GameState::Point &point);
 
 struct heuristic_t {
+    heuristic_t(): greedy(false), full(&GameState::noHeuristic), update(&GameState::updateNoHeuristic) {}
+
+    bool greedy;
     heuristic_f full;
     update_heuristic_f update;
 };
@@ -42,24 +46,33 @@ class Generators {
             pos++;
     }
 
-    heuristic_t setHeuristic(std::string option)
+    heuristic_t setHeuristic(int ac, char **av)
     {
         heuristic_t heuristic;
-        if (option == "-m" || option == "--manhattan")
-            heuristic = {.full = &GameState::manhattan,
-                         .update = &GameState::updateManhattan};
-        else if (option == "-l" || option == "--linearconflict")
-            heuristic = {.full = &GameState::linearConflict,
-                         .update = &GameState::updateLinearConflict};
-        else if (option == "-h" || option == "--hamming")
-            heuristic = {.full = &GameState::hamming,
-                         .update = &GameState::updateHamming};
-        else if (option == "-n" || option == "--none")
-            heuristic = {.full = &GameState::noHeuristic,
-                         .update = &GameState::updateNoHeuristic};
-        else
-            throw std::invalid_argument("Invalid heuristic option \"" + option + "\", options are:\n\
- -m or --manhattan\n -l or --linearconflict\n -h or --hamming\n -n or --none");
+        int c;
+        while ((c = getopt(ac, av, "mlhg")) != -1)
+            switch (c) {
+                case 'm':
+                    heuristic.full = &GameState::manhattan;
+                    heuristic.update = &GameState::updateManhattan;
+                    break;
+                case 'l':
+                    heuristic.full = &GameState::linearConflict;
+                    heuristic.update = &GameState::updateLinearConflict;
+                    break;
+                case 'h':
+                    heuristic.full = &GameState::hamming;
+                    heuristic.update = &GameState::updateHamming;
+                    break;
+                case 'g':
+                    heuristic.greedy = true;
+                    break;
+                default:
+                    throw std::invalid_argument("Available options are:\n \
+-m for manhattan\n -l for linearconflict\n -h for hamming\n -g for greedy");
+        }
+        if (heuristic.greedy && heuristic.full == &GameState::noHeuristic)
+            throw std::invalid_argument("You have to specify an heuristic to go along with the greedy option");
         return heuristic;
     }
 

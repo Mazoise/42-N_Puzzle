@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     std::srand(time(NULL));
     try {
         Generators gen;
-        Puzzle puzzle(gen.setHeuristic(argv[1]), gen.initMap(argv[2]), gen.generateSolution());
+        Puzzle puzzle(gen.setHeuristic(argc, argv), gen.initMap(argv[argc - 1]), gen.generateSolution());
         auto solution = puzzle.solve();
         puzzle.play(solution);
     } catch (Generators::ParsingException e) {

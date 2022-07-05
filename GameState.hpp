@@ -354,8 +354,8 @@ class GameState {
     }
 
     friend bool operator>(const GameState &lhs, const GameState &rhs) {
-        size_t f_l = lhs._heuristicScore + lhs._depth;
-        size_t f_r = rhs._heuristicScore + rhs._depth;
+        size_t f_l = lhs._heuristicScore + lhs._depth * _g;
+        size_t f_r = rhs._heuristicScore + rhs._depth * _g;
         if (f_l == f_r)
             return lhs._heuristicScore > rhs._heuristicScore;
         return f_l > f_r;
@@ -386,6 +386,7 @@ class GameState {
         // }
         return os;
     }
+    static bool             _g;
 
   private:
     std::vector<int>        _data;
@@ -406,3 +407,5 @@ std::map<GameState::Direction, GameState::Point> GameState::directions = {
     {LEFT, Point(-1, 0)},
     {UP, Point(0, -1)}
 };
+
+bool GameState::_g = true;

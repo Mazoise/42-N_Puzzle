@@ -25,7 +25,9 @@ class Puzzle {
         _heuristic(heuristic),
         _total_states(0),
         _max_ressource(0)
-    {}
+    {
+        GameState::_g = !heuristic.greedy;
+    }
 
     Solution solve() {
         std::priority_queue<GameState, std::vector<GameState>, std::greater<GameState> > queue;
