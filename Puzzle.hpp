@@ -30,7 +30,6 @@ class Puzzle {
     Solution solve() {
         std::priority_queue<GameState, std::vector<GameState>, std::greater<GameState> > queue;
         GameState::Point last_move;
-        // std::unordered_map<uint64_t, uint64_t> came_from;
         std::unordered_map< uint64_t, size_t > visited;
 
         if(!_initial.isSolvable()) { // solution solvability can be precalculated for each size
@@ -51,14 +50,10 @@ class Puzzle {
                 _max_ressource = queue.size() + visited.size();
             _total_states++;
             if (current.hash() == _solution.hash()) {
-                return current.get_moves();
+                return constructSolution();
             }
             visited.insert(std::make_pair(current.hash(), current.getHeuristicScore()));
             for (auto& move : current.directions) {
-                if (move.second == last_move * -1) {
-                    continue;
-                }
-                last_move = move.second;
                 GameState::Point neighbor = current.neighbor(move.first);
                 if (!neighbor.in_bounds(_size))
                     continue;
@@ -66,17 +61,37 @@ class Puzzle {
                 next.swap(neighbor);
                 next.setHeuristicScore(_heuristic(next, _solution)); // tie breaking
                 auto already_visited = visited.find(next.hash());
-                if (already_visited == visited.end() || already_visited->second > next.getHeuristicScore() + next.get_moves().size() + 1) {
-                    if (already_visited != visited.end())
-                        already_visited->second = next.getHeuristicScore() + next.get_moves().size() + 1;
-                    next.push_move(move.first);
+                if (already_visited == visited.end() || already_visited->second > next.getHeuristicScore() + next.getDepth() + 1) {
+                    if (already_visited != visited.end()) {
+                        already_visited->second = next.getHeuristicScore() + next.getDepth() + 1;
+                        _came_from[next.hash()] = move.first;
+                    }
+                    _came_from.insert({next.hash(), move.first});
                     queue.push(std::move(next));
-                    // came_from.insert(std::make_pair(next.hash(), current.hash()));
                 }
             }
         }
         std::cout << "No solution" << std::endl;
         return Solution();
+    }
+
+    Solution constructSolution() {
+        GameState current(_solution);
+        std::unordered_map<GameState::Direction, GameState::Direction> reverse = {
+            {GameState::LEFT, GameState::RIGHT},
+            {GameState::RIGHT, GameState::LEFT},
+            {GameState::UP, GameState::DOWN},
+            {GameState::DOWN, GameState::UP}
+        };
+        Solution solution;
+
+        while (current != _initial) {
+            GameState::Direction r = reverse[_came_from[current.hash()]];
+            GameState::Point neighbor = current.neighbor(r);
+            current.swap(neighbor);
+            solution.push_front(r);
+        }
+        return solution;
     }
 
     void play(const Solution& sol) {
@@ -102,5 +117,5 @@ class Puzzle {
     heuristic_t _heuristic;
     size_t      _total_states;
     size_t      _max_ressource;
-    std::map<uint64_t, GameState::Direction> _came_from;
+    std::unordered_map<uint64_t, GameState::Direction> _came_from;
 };
