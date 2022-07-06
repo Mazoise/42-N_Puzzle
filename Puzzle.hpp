@@ -48,6 +48,8 @@ class Puzzle {
             }
             visited.insert(std::make_pair(current.hash(), current.getDepth()));
             for (auto& move : current.directions) {
+                if (current.isRedundant(move.second))
+                    continue ;
                 GameState::Point neighbor = current.neighbor(move.first);
                 if (!neighbor.in_bounds(_size))
                     continue;
@@ -64,6 +66,7 @@ class Puzzle {
                     }
                     else
                         _came_from.insert({next.hash(), move.first});
+                    next.setRedondant(move.second * -1);
                     queue.push(std::move(next));
                 }
             }

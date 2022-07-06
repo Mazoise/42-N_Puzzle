@@ -101,6 +101,7 @@ class GameState {
         _zero = rhs._zero;
         _depth = rhs._depth;
         _heuristicScore = rhs._heuristicScore;
+        _redundantMove = rhs._redundantMove;
         // std::cout << "copy constructor" << std::endl;
     }
 
@@ -112,6 +113,7 @@ class GameState {
         _zero = rhs._zero;
         _depth = rhs._depth;
         _heuristicScore = rhs._heuristicScore;
+        _redundantMove = rhs._redundantMove;
         // std::cout << "move constructor" << std::endl;
     }
 
@@ -126,6 +128,7 @@ class GameState {
         _zero = rhs._zero;
         _depth = rhs._depth;
         _heuristicScore = rhs._heuristicScore;
+        _redundantMove = rhs._redundantMove;
         // std::cout << "move operator" << std::endl;
         return *this;
     }
@@ -345,6 +348,14 @@ class GameState {
         return p.y * _size + p.x;
     }
 
+    void setRedondant(const Point& p) {
+        _redundantMove = p;
+    }
+
+    bool isRedundant(const Point& p) {
+        return p == _redundantMove;
+    }
+
     int operator[](Point p) const {
         return _data[p.x + p.y * _size];
     }
@@ -397,6 +408,7 @@ class GameState {
     const RandomTable&      _table;
     size_t                  _depth;
     size_t                  _heuristicScore;
+    Point                   _redundantMove;
 
     GameState& operator=(const GameState&) = delete;
 };
