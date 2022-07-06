@@ -4,13 +4,30 @@
 #include <iostream>
 #include <fstream>
 
+void print_usage() {
+    std::cout << "\
+Usage : ./n_puzzle [OPTION]... [ARG] \n\
+Implementation of the A* algorithm to solve N-puzzles\n\
+\n\
+ARG is either a size or a path to a map\n\
+\n\
+Options:\n\
+  -m, --manhattan-distance\tmanhattan distance heuristic\n\
+  -l, --linear-conflict\t\tmanhattan distance + linear conflict heuristic\n\
+  -h, --hamming\t\t\thamming disntance heuristic\n\
+  -g, --greedy\t\t\tgreedy search (Not guaranteed to find the shortest solution)\n\
+\n\
+No option will run the A* with uniform cost search\n\
+\n\
+Example:\n\
+  ./n_puzzle -l 4" << std::endl;
+}
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3) // ignoring if more args
+    if (argc < 2) // ignoring if more args
     {
-        std::cerr << "Missing arguments : first argument should be heuristic options\
- (-h, -l, -m or -n), second should be map file or a size for random map" << std::endl;
+        print_usage();
         return 1;
     }
     std::srand(time(NULL));
@@ -23,7 +40,8 @@ int main(int argc, char *argv[])
         std::cerr << "Parsing error : " << e.what() << std::endl;
         return 1;
     } catch (std::invalid_argument e) {
-        std::cerr << "Invalid argument : " << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
+        print_usage();
         return 1;
     } catch (std::exception e) {
         std::cerr << "Error : " << e.what() << std::endl;

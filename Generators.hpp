@@ -48,9 +48,17 @@ class Generators {
 
     heuristic_t setHeuristic(int ac, char **av)
     {
+        static struct option long_options[] = {
+            {"manhattan-distance", no_argument, 0, 'm'},
+            {"linear-conflict", no_argument, 0, 'l'},
+            {"hamming", no_argument, 0, 'h'},
+            {"greedy", no_argument, 0, 'g'},
+            {0,0,0,0}
+        };
         heuristic_t heuristic;
         int c;
-        while ((c = getopt(ac, av, "mlhg")) != -1)
+        int long_index;
+        while ((c = getopt_long(ac, av, "mlhg", long_options, &long_index)) != -1)
             switch (c) {
                 case 'm':
                     heuristic.full = &GameState::manhattan;
@@ -68,11 +76,10 @@ class Generators {
                     heuristic.greedy = true;
                     break;
                 default:
-                    throw std::invalid_argument("Available options are:\n \
--m for manhattan\n -l for linearconflict\n -h for hamming\n -g for greedy");
+                    throw std::invalid_argument("");
         }
         if (heuristic.greedy && heuristic.full == &GameState::noHeuristic)
-            throw std::invalid_argument("You have to specify an heuristic to go along with the greedy option");
+            throw std::invalid_argument("Invalid Argument: You have to specify an heuristic to go along with the greedy option");
         return heuristic;
     }
 
