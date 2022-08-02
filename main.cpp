@@ -35,7 +35,8 @@ int main(int argc, char *argv[])
         Generators gen;
         Puzzle puzzle(gen.setHeuristic(argc, argv), gen.initMap(argv[argc - 1]), gen.generateSolution());
         auto solution = puzzle.solve();
-        puzzle.play(solution);
+        if (solution.size())
+            puzzle.play(solution);
     } catch (Generators::ParsingException e) {
         std::cerr << "Parsing error : " << e.what() << std::endl;
         return 1;

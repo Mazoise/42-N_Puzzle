@@ -100,25 +100,28 @@ class Puzzle {
     void play(const Solution& sol) {
         GameState current(_initial);
 
+        std::cout << "Number of moves : " << sol.size() << std::endl;
+        std::cout << "Max ressource : " << _max_ressource << std::endl;
+        std::cout << "Total states : " << _total_states << std::endl;
+        for (size_t i = 0; i < current.size() + 2; i++)
+            std::cout << std::endl;
         for (auto& move : sol) {
             auto neighbor = current.neighbor(move);
-            current.swap(neighbor);    
-            std::cout << "\x1B[2J\x1B[H";
-            std::cout << "Number of moves : " << sol.size() << std::endl;
-            std::cout << "Max ressource : " << _max_ressource << std::endl;
-            std::cout << "Total states : " << _total_states << std::endl;
-            std::cout << current << std::endl;
+            current.swap(neighbor);
+            for (size_t i = 0; i < current.size() + 1; i++)    
+                std::cout << "\033[1A";
+            std::cout << current;
             getchar();
         }
     }
 
   private:
-    size_t              _size;
-    RandomTable         _table;
-    GameState           _initial;
-    GameState           _solution;
-    heuristic_t         _heuristic;
-    size_t              _total_states;
-    size_t              _max_ressource;
-    std::unordered_map<uint64_t, GameState::Direction> _came_from;
+    size_t                                              _size;
+    RandomTable                                         _table;
+    GameState                                           _initial;
+    GameState                                           _solution;
+    heuristic_t                                         _heuristic;
+    size_t                                              _total_states;
+    size_t                                              _max_ressource;
+    std::unordered_map<uint64_t, GameState::Direction>  _came_from;
 };
