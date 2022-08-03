@@ -99,6 +99,7 @@ class Puzzle {
 
     void play(const Solution& sol) {
         GameState current(_initial);
+        std::string osef;
 
         std::cout << "Number of moves : " << sol.size() << std::endl;
         std::cout << "Max ressource : " << _max_ressource << std::endl;
@@ -111,7 +112,7 @@ class Puzzle {
             for (size_t i = 0; i < current.size() + 1; i++)    
                 std::cout << "\033[1A";
             std::cout << current;
-            getchar();
+            getline(std::cin, osef);
         }
     }
 
